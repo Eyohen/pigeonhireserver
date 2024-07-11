@@ -9,7 +9,7 @@ const size = require('./route/size');
 // import visibility from './route/visibility';
 const engagementLevel = require('./route/engagementLevel');
 const communicationPlatform = require('./route/communicationPlatform');
-const collaborationType =  require('./route/collaborationType');
+// const collaborationType =  require('./route/collaborationType');
 const collab = require('./route/collab');
 // import submenu from './route/submenu';
 // import crockery from './route/crockery';
@@ -57,7 +57,7 @@ app.use("/api/communities", community);
 app.use("/api/communityTypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
 app.use("/api/communicationPlatforms", communicationPlatform);
-app.use("/api/collaborationTypes", collaborationType)
+// app.use("/api/collaborationTypes", collaborationType)
 app.use("/api/collabs", collab);
 app.use("/api/goals", goal);
 app.use("/api/sizes", size);
