@@ -46,6 +46,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true
     },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+
+    },
     role: {
       type: DataTypes.ENUM,
       values: Object.values(RoleType),
@@ -55,7 +60,15 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
       allowNull: false
-    }
+    },
+    verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+  },
+  verificationToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+  }
   }, {
     sequelize,
     modelName: 'User',

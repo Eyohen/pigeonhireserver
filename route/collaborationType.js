@@ -1,21 +1,22 @@
 const express = require('express');
 
-const {create, readall, readId, update, deleteId, readByUserId} = require('../controller/community')
+const {create, readall, readId, update, deleteId} = require('../controller/collaborationType')
 // import verifyToken from '../middleware/verifyToken';
 // import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
-const multer = require('multer');
+// const multer = require('multer');
 
 
 const router = express.Router();
 
 // set up multer storage for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({storage});
+// const storage = multer.memoryStorage();
+// const upload = multer({storage});
+
+
 
 router.post(
 	'/create',
     // verifyToken,
-    upload.single('imageUrl'),
     create
 );
 
@@ -38,6 +39,5 @@ router.delete(
     // verifyToken,
     deleteId
 );
-router.get("/user/:userId", readByUserId); 
 
 module.exports = router;

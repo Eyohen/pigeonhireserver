@@ -4,6 +4,29 @@ const jwt = require('jsonwebtoken');
 const db = require('../models');
 // const RequestWithUser = require('../utils/RequestWithUser');
 const { User } = db;
+const {sendVerificationEmail} = require('../utils/nodemailer');
+
+  // const register = async (req, res) => {
+  //   try {
+  //     const { firstName, lastName, email, password } = req.body;
+
+  //     // Check if user with the given email already exists
+  //     const existingUser = await User.findOne({ where: { email } });
+  //     if (existingUser) {
+  //       return res.status(400).json({ msg: 'User with this email already exists' });
+  //     }
+
+  //     // Hash the password
+  //     const hashedPassword = await bcrypt.hash(password, 10);
+
+  //     // Create the user record with hashed password
+  //     const record = await User.create({ ...req.body, email, password: hashedPassword });
+  //     return res.status(200).json({ record, msg: "User successfully created" });
+  //   } catch (error) {
+  //     console.log("henry", error);
+  //     return res.status(500).json({ msg: "Failed to register user", error });
+  //   }
+  // }
 
   const register = async (req, res) => {
     try {
@@ -12,20 +35,61 @@ const { User } = db;
       // Check if user with the given email already exists
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
-        return res.status(400).json({ msg: 'User with this email already exists' });
+        return res.status(400).json({ msg: 'invalid credentials used' });
       }
 
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      //create verification token
+      const verificationToken = await uuidv4();
+
       // Create the user record with hashed password
-      const record = await User.create({ ...req.body, email, password: hashedPassword });
+      const record = await User.create({ ...req.body, email, password: hashedPassword, verificationToken });
+
+      //send verification email
+      sendVerificationEmail(email, verificationToken);
+
+
       return res.status(200).json({ record, msg: "User successfully created" });
     } catch (error) {
       console.log("henry", error);
       return res.status(500).json({ msg: "Failed to register user", error });
     }
   }
+
+
+  const verifyEmail= async (req, res) => {
+    try {
+      const {token} = req.query;
+
+      console.log('toeiehe', token)
+
+      //find the user with the provided token
+      const user = await User.findOne({where: {verificationToken: token}});
+      console.log({user})
+
+      if(!user) {
+        return res.status(400).json({msg: 'Invalid or expired token'});
+      }
+
+      // verify the user 
+      await user.update({verified : true, verificationToken : null});
+      // user.verified = true;
+      // user.verificationToken = null;
+      await user.save();
+
+      return res.status(200).json({msg: 'Email successfully verified'})
+
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      return res.status(500).json({ msg: 'Failed to verify email', error });
+    }
+  }
+
+
+
+
 
   const login = async (req, res) => {
     try {
@@ -35,6 +99,11 @@ const { User } = db;
       const user = await User.findOne({ where: { email } });
       if (!user) {
         return res.status(404).json({ msg: 'User not found' });
+      }
+
+      // check if users email is verified
+      if(!user.verified){
+        return res.status(401).json({msg: "Please verify your email to log in"});
       }
 
       // Compare the provided password with the hashed password in the database
@@ -199,4 +268,4 @@ const { User } = db;
   }
 
 
-module.exports = {register, login, adminLogin, refresh, readId, readall, update, deleteId};
+module.exports = {register, login, adminLogin, refresh, readId, readall, update, deleteId, verifyEmail};

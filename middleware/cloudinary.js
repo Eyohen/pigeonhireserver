@@ -12,7 +12,7 @@ const uploadtocloudinary = async (fileBuffer) => {
         const options = {
             use_filename: true,
             folder: 'fiverr',
-            public_id: 'custom',
+            public_id: `custom${Date.now()}`, // Ensuring a unique public_id for each upload
         };
 
         const result = await new Promise((resolve, reject) => {

@@ -6,7 +6,9 @@ const cloudinary = require("cloudinary").v2;
 const path = require("path");
 const { uploadtocloudinary, uploadType } = require("../middleware/cloudinary");
 const db = require("../models");
-const { Community, Payment, User } = db;
+const { totalmem } = require("os");
+const { Community, User } = db;
+const { Op } = require('sequelize');
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -43,15 +45,41 @@ cloudinary.config({
 		}
 	}
 
+	// const readall = async (req, res) => {
+	// 	try {
+	// 		const limit = req.query.limit || 10;
+	// 		const offset = req.query.offset;
+
+	// 		const records = await Community.findAll({
+	// 			// include:[{model:Payment, as: 'Payment'},{model:User, as: 'User'}]
+	// 		});
+	// 		return res.json(records);
+	// 	} catch (e) {
+	// 		return res.json({ msg: "fail to read", status: 500, route: "/read" });
+	// 	}
+	// }
+
 	const readall = async (req, res) => {
 		try {
-			const limit = req.query.limit || 10;
-			const offset = req.query.offset;
+			// const limit = req.query.limit || 10;
+			// const offset = req.query.offset;
+			const { page = 1, limit = 10, search = ''} = req.query;
+			const offset = (page - 1) * limit;
 
-			const records = await Community.findAll({
-				// include:[{model:Payment, as: 'Payment'},{model:User, as: 'User'}]
+			const {count, rows: communities} = await Community.findAndCountAll({
+				where: {
+					name:{
+						[Op.iLike]: `%${search}%`
+					}
+				},
+				limit: parseInt(limit),
+				offset:parseInt(offset)
 			});
-			return res.json(records);
+			return res.json({
+				communities,
+				totalPages:Math.ceil(count / limit),
+				currentPage: parseInt(page)
+			});
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read" });
 		}
@@ -64,6 +92,16 @@ cloudinary.config({
 			return res.json(record);
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read/:id" });
+		}
+	}
+
+	const readByUserId = async (req, res) => {
+		try {
+			const { userId } = req.params;
+			const communities = await Community.findAll({ where: { user: userId } });
+			return res.json(communities);
+		} catch (e) {
+			return res.json({ msg: "fail to read", status: 500, route: "/read/user/:userId" });
 		}
 	}
 
@@ -103,4 +141,4 @@ cloudinary.config({
 	}
 
 
-module.exports = {create, readall, readId, update, deleteId};
+module.exports = {create, readall, readId, update, deleteId, readByUserId};

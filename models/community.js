@@ -1,46 +1,15 @@
 'use strict';
 
-
 const {Model, UUIDV4} = require('sequelize');
-
-
-
-// interface CommunityAttributes {
-//  id: string;
-//  name:string;
-//  description:string;
-//  communityType:string;
-//  location:string;
-//  size:string;
-//  communityInterest:string;
-//  engagementLevel:string;
-//  communicationPlatform:string;
-//  communityGoal:string;
-//  accessType:string;
-//  prevCollabType:string;
-//  imageUrl:string;
-//  usp:string;
-//  recognition:string;
-//  additionalService:string;
-//  whatsapp:string;
-//  telegram:string;
-//  twitter:string;
-//  user:string;
-
-//}
-
 
 module.exports = (sequelize, DataTypes) => {
   class Community extends Model {
-   
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
 
-   
- 
     static associate(models) {
       // define association here
 //       Community.hasOne(models.USER, {
@@ -68,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       // autoIncrement: true
     },
+    verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+  },
     name: {
         type: DataTypes.STRING,
         allowNull: false
