@@ -6,7 +6,7 @@ const community =  require('./route/community');
 const goal =  require('./route/goal');
 const communityType = require('./route/communityType')
 const size = require('./route/size');
-// import visibility from './route/visibility';
+const visible = require('./route/visible');
 const engagementLevel = require('./route/engagementLevel');
 const communicationPlatform = require('./route/communicationPlatform');
 // const collaborationType =  require('./route/collaborationType');
@@ -53,7 +53,7 @@ app.use((req, res, next)=>{
 app.use("/api/auth", auth);
 app.use("/api/users", user);
 app.use("/api/communities", community);
-// app.use("/api/visibility", visibility);
+app.use("/api/visible", visible);
 app.use("/api/communityTypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
 app.use("/api/communicationPlatforms", communicationPlatform);
