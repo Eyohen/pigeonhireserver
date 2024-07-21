@@ -39,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
           },
+    commTypeCategory:{
+      type: DataTypes.ARRAY(DataTypes.STRING), // array of strings
+      allowNull:true,
+    },
 
   }, {
     sequelize,

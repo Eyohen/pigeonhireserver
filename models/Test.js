@@ -1,9 +1,15 @@
 'use strict';
 
+
+
 const { Model, UUIDV4 } = require('sequelize');
 
+
+
+
+
 module.exports = (sequelize, DataTypes) => {
-  class CommunicationPlatform extends Model{
+  class Test extends Model{
    
     /**
      * Helper method for defining associations.
@@ -27,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
 // )
     }
   }
-  CommunicationPlatform.init({
+ Test.init({
 
     id: {
       type: DataTypes.UUID,
@@ -37,18 +43,17 @@ module.exports = (sequelize, DataTypes) => {
       // autoIncrement: true
     },
     communicationPlatform: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    communicationCategory:{
-      type: DataTypes.ARRAY(DataTypes.STRING), // array of strings
-      allowNull:true,
-    },
-        
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      communicationCategory:{
+        type: DataTypes.STRING,
+        allowNull:true,
+      },
 
   }, {
     sequelize,
-    modelName: 'CommunicationPlatform',
+    modelName: 'Test',
   });
-  return CommunicationPlatform;
+  return Test;
 };

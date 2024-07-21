@@ -51,8 +51,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     communityType: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
       },
+    commTypeCategory:{
+        type: DataTypes.STRING,
+        allowNull:true
+    },
     location: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -64,19 +68,35 @@ module.exports = (sequelize, DataTypes) => {
       },
     communityInterest: {
           type: DataTypes.STRING,
-          allowNull: false
+          allowNull: true
         },
+    interestCategory:{
+        type: DataTypes.STRING,
+        allowNull:true
+    },
     engagementLevel: {
-            type: DataTypes.STRING,
-            allowNull: false
-          },
-    communicationPlatform: {
           type: DataTypes.STRING,
           allowNull: false
+    },
+    communicationPlatform: {
+          type: DataTypes.STRING,
+          allowNull: true
         },
+    communicationCategory: {
+          type: DataTypes.STRING,
+          allowNull: true
+      },
+    connCategory: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    contentShared: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     communityGoal: {
-            type: DataTypes.STRING,
-            allowNull: false
+          type: DataTypes.STRING,
+          allowNull: false
           },
     accessType: {
             type: DataTypes.STRING,

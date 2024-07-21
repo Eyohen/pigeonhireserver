@@ -37,8 +37,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     communityType: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
       },
+      commTypeCategory:{
+        type: DataTypes.STRING,
+        allowNull:true
+    },
     location: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -48,17 +52,25 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
-    interest: {
+    communityInterest: {
           type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
         },
+    interestCategory:{
+          type: DataTypes.STRING,
+          allowNull:true
+      },
     engagementLevel: {
-            type: DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: false
           },
     communicationPlatform: {
           type: DataTypes.STRING,
-        allowNull: false
+          allowNull: true
+          },
+      communicationCategory: {
+            type: DataTypes.STRING,
+            allowNull: true
         },
     price: {
             type: DataTypes.FLOAT,
@@ -70,17 +82,25 @@ module.exports = (sequelize, DataTypes) => {
             // defaultValue:"Standard",
           },
     frequency: {
-            type: DataTypes.FLOAT,
+            type: DataTypes.STRING,
             allowNull: true
             },
     days: {
-            type: DataTypes.FLOAT,
+            type: DataTypes.STRING,
             allowNull: true
             },
     contentType: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
             },
+    connCategory: {
+          type: DataTypes.STRING,
+          allowNull: true
+      },
+      contentShared: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
     platformLink: {
             type: DataTypes.STRING,
             allowNull: false,

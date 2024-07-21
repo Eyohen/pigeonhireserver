@@ -9,6 +9,10 @@ const size = require('./route/size');
 const visible = require('./route/visible');
 const engagementLevel = require('./route/engagementLevel');
 const communicationPlatform = require('./route/communicationPlatform');
+const connCategory = require('./route/connCategory')
+const contentShared = require('./route/contentShared')
+const test = require('./route/test')
+
 // const collaborationType =  require('./route/collaborationType');
 const collab = require('./route/collab');
 // import submenu from './route/submenu';
@@ -16,6 +20,7 @@ const collab = require('./route/collab');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
+
 
 
 const app = express();
@@ -61,6 +66,9 @@ app.use("/api/communicationPlatforms", communicationPlatform);
 app.use("/api/collabs", collab);
 app.use("/api/goals", goal);
 app.use("/api/sizes", size);
+app.use("/api/connectioncategories", connCategory);
+app.use("/api/contentshared", contentShared);
+app.use("/api/test", test);
 // app.use("/api/payments", payment);
 // app.use("/api/crockerys", crockery);
 

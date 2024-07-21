@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 // Function to send verification email
 const sendVerificationEmail = (email, token) => {
     const mailOptions = {
-        from: `"Pigeon Hire" <${process.env.EMAIL_USER}>`, // Sender address
+        from: `"Pigeonhire Support" <${process.env.EMAIL_USER}>`, // Sender address
         to: email, // List of recipients
         subject: 'Verify your email address', // Subject line
         html: `<p>Please verify your email address by clicking the link below:</p>
