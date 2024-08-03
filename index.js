@@ -12,11 +12,8 @@ const communicationPlatform = require('./route/communicationPlatform');
 const connCategory = require('./route/connCategory')
 const contentShared = require('./route/contentShared')
 const test = require('./route/test')
-
-// const collaborationType =  require('./route/collaborationType');
+const blog = require('./route/blog');
 const collab = require('./route/collab');
-// import submenu from './route/submenu';
-// import crockery from './route/crockery';
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -62,15 +59,13 @@ app.use("/api/visible", visible);
 app.use("/api/communityTypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
 app.use("/api/communicationPlatforms", communicationPlatform);
-// app.use("/api/collaborationTypes", collaborationType)
 app.use("/api/collabs", collab);
 app.use("/api/goals", goal);
 app.use("/api/sizes", size);
 app.use("/api/connectioncategories", connCategory);
 app.use("/api/contentshared", contentShared);
 app.use("/api/test", test);
-// app.use("/api/payments", payment);
-// app.use("/api/crockerys", crockery);
+app.use("/api/posts", blog)
 
 
 if (process.env.NODE_ENV === 'development') {

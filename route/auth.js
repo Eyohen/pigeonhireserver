@@ -2,7 +2,7 @@ const express = require('express');
 // import TodoValidator from '../validator';
 // import Middleware from '../../middleware';
 // const {re} = require('../controller/UserController');
-const {register, login, adminLogin, refresh, verifyEmail} = require('../controller/user');
+const {register, login, adminLogin, refresh, verifyEmail, forgotPassword, resetPassword, verifyOTP} = require('../controller/user');
 // import verifyToken from '../middleware/verifyToken';
 // import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
 
@@ -31,6 +31,19 @@ router.get(
     '/refresh',
     refresh
 );
+router.post(
+    '/forgot-password',
+    forgotPassword
+);
+router.post(
+    '/reset-password',
+    resetPassword
+);
+router.post(
+    '/verify-otp',
+    verifyOTP
+);
+
 
 
 module.exports = router;

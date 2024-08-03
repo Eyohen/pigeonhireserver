@@ -68,7 +68,21 @@ module.exports = (sequelize, DataTypes) => {
   verificationToken: {
       type: DataTypes.STRING,
       allowNull: true,
-  }
+  },
+  resetPasswordOTP:{
+    type:DataTypes.STRING,
+    allowNull:true
+  },
+  resetPasswordToken:{
+    type: DataTypes.STRING,
+    allowNull:true
+  },
+
+  resetPasswordExpires:{
+    type: DataTypes.DATE,
+    allowNull:true
+  },
+
   }, {
     sequelize,
     modelName: 'User',

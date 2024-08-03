@@ -95,9 +95,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     communityGoal: {
-          type: DataTypes.STRING,
-          allowNull: false
-          },
+        type: DataTypes.STRING,
+        allowNull: false
+      },
     accessType: {
             type: DataTypes.STRING,
             allowNull: false,

@@ -5,28 +5,10 @@ const db = require('../models');
 // const RequestWithUser = require('../utils/RequestWithUser');
 const { User } = db;
 const {sendVerificationEmail} = require('../utils/nodemailer');
+const crypto = require('crypto');
+const {sendResetPasswordEmail} = require('../utils/nodemailer')
+const { Op } = require('sequelize');
 
-  // const register = async (req, res) => {
-  //   try {
-  //     const { firstName, lastName, email, password } = req.body;
-
-  //     // Check if user with the given email already exists
-  //     const existingUser = await User.findOne({ where: { email } });
-  //     if (existingUser) {
-  //       return res.status(400).json({ msg: 'User with this email already exists' });
-  //     }
-
-  //     // Hash the password
-  //     const hashedPassword = await bcrypt.hash(password, 10);
-
-  //     // Create the user record with hashed password
-  //     const record = await User.create({ ...req.body, email, password: hashedPassword });
-  //     return res.status(200).json({ record, msg: "User successfully created" });
-  //   } catch (error) {
-  //     console.log("henry", error);
-  //     return res.status(500).json({ msg: "Failed to register user", error });
-  //   }
-  // }
 
   const register = async (req, res) => {
     try {
@@ -86,9 +68,6 @@ const {sendVerificationEmail} = require('../utils/nodemailer');
       return res.status(500).json({ msg: 'Failed to verify email', error });
     }
   }
-
-
-
 
 
   const login = async (req, res) => {
@@ -191,6 +170,117 @@ const {sendVerificationEmail} = require('../utils/nodemailer');
     }
   }
 
+const forgotPassword = async (req, res) => {
+  try{
+    const {email} = req.body;
+
+    // check if user with the given email exists
+    const user = await User.findOne({where:{email}});
+
+    if(!user){
+      return res.status(404).json({msg:'User not found'});
+    }
+
+    // generate a 4-digit otp
+    const otp = crypto.randomInt(1000, 9999).toString().padStart(4, '0');
+
+    // generate a unique token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+
+    //save the OTP, token  and its expiration time in the user record
+    user.resetPasswordOTP = otp;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // otp expires in 10 minutes
+    await user.save();
+
+
+    // send email with OTP
+    await sendResetPasswordEmail(email, otp, resetToken);
+
+    return res.status(200).json({msg:'Password reset OTP sent to your email', resetToken});
+
+  } catch (error) {
+    console.error('Error in forgot password:', error);
+    return res.status(500).json({msg:"Failed to process forgot password request", error});
+  }
+};
+
+
+const verifyOTP = async (req, res) => {
+  try{
+    const {otp} = req.body;
+    const resetToken = req.headers['x-reset-token']; //  get the reset token from headers
+
+    if(!resetToken) {
+      return res.status(400).json({msg:'Reset token is required'});
+    }
+
+    // find user by reset token
+    const user = await User.findOne({
+      where:{
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: {[Op.gt]: Date.now()} // check if token is expired
+        }
+    });
+
+    if(!user){
+      return res.status(404).json({msg:'Invalid or expired reset token'});
+    }
+
+    //check if OTP is valid
+    if(user.resetPasswordOTP !== otp){
+      return res.status(400).json({sg:'Invalid OTP'});
+    }
+
+
+    //OTP is valid
+    return res.status(200).json({msg:'OTP verified successfully'});
+  } catch(error){
+console.error('Error in OTP verification:', error);
+return res.status(500).json({msg:"Failed to verify OTP", error})
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try{
+    const {newPassword} = req.body;
+    const resetToken = req.headers['x-reset-token'];
+
+    if(!resetToken){
+      return res.status(400).json({msg:'Reset token is required'});
+    }
+
+    // find user by reset token
+    const user = await User.findOne({where:{
+      resetPasswordToken:resetToken,
+      resetPasswordExpires: {[Op.gt]:Date.now()} //check if token is not expired
+    }});
+
+
+    if(!user){
+      return res.status(404).json({msg: 'Invalid reset token'});
+    }
+
+
+    // hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password and clear reset fields
+    user.password = hashedPassword;
+    user.resetPasswordOTP = null;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({msg:'Password reset successful'});
+
+  } catch (error) {
+    console.error('Error in reset password:', error);
+    return res.status(500).json({msg:'Failed to reset password', error})
+  }
+}
+
   const profile = async (req, res) => {
     try {
       if (!req.user) {
@@ -268,4 +358,4 @@ const {sendVerificationEmail} = require('../utils/nodemailer');
   }
 
 
-module.exports = {register, login, adminLogin, refresh, readId, readall, update, deleteId, verifyEmail};
+module.exports = {register, login, adminLogin, refresh, readId, readall, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};

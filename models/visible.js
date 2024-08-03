@@ -39,14 +39,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true
       },
-      commTypeCategory:{
+    commTypeCategory:{
         type: DataTypes.STRING,
         allowNull:true
     },
+    established:{
+      type: DataTypes.STRING,
+      allowNull:true
+  },
     location: {
         type: DataTypes.STRING,
         allowNull: false,
-        // defaultValue:"Standard",
+      },
+      communityGoal: {
+        type: DataTypes.STRING,
+        allowNull: true
       },
     size: {
         type: DataTypes.STRING,
@@ -64,6 +71,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
           },
+    accessRequire: {
+        type: DataTypes.STRING,
+        allowNull: true
+        },
     communicationPlatform: {
           type: DataTypes.STRING,
           allowNull: true
@@ -89,10 +100,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
             },
-    contentType: {
-            type: DataTypes.STRING,
-            allowNull: true
-            },
+    // contentType: {
+    //         type: DataTypes.STRING,
+    //         allowNull: true
+    //         },
     connCategory: {
           type: DataTypes.STRING,
           allowNull: true
