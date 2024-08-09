@@ -61,8 +61,6 @@ cloudinary.config({
 
 	const readall = async (req, res) => {
 		try {
-			// const limit = req.query.limit || 10;
-			// const offset = req.query.offset;
 			const { page = 1, limit = 10, search = ''} = req.query;
 			const offset = (page - 1) * limit;
 
@@ -84,6 +82,32 @@ cloudinary.config({
 			return res.json({ msg: "fail to read", status: 500, route: "/read" });
 		}
 	}
+
+	const countCommunity = async (req, res) => {
+		try {
+			const { search = '' } = req.query;
+	
+			const count = await Community.count({
+				where: {
+					name: {
+						[Op.iLike]: `%${search}%`
+					}
+				}
+			});
+	
+			return res.json({
+				count: count,
+				status: 200
+			});
+		} catch (e) {
+			console.error("Error counting communities:", e);
+			return res.status(500).json({ 
+				msg: "Failed to count communities", 
+				status: 500, 
+				route: "/count" 
+			});
+		}
+	};
 
 	const readId = async (req, res) => {
 		try {
@@ -107,8 +131,38 @@ cloudinary.config({
 
 	const update = async (req, res) => {
 		try {
-			// const { title, content } = req.body;
-			const updated = await Community.update({ ...req.body }, { where: { id: req.params.id } });
+			const {verified,name,description,communityType,commTypeCategory,location,size,communityInterest,interestCategory,engagementLevel,communicationPlatform,communicationCategory,
+				connCategory,contentShared,communityGoal,accessType,prevCollabType,usp,recognition,additionalService,whatsapp,telegram,twitter, user
+			 } = req.body;
+
+			// Prepare update object with only the fields that should be updated
+			const updateData = {};
+			if (verified !== undefined) updateData.verified = verified;
+			if (name !== undefined) updateData.name = name;
+			if (recognition!== undefined) updateData.description = description;
+			if (communityType !== undefined) updateData.communityType = communityType;
+			if (commTypeCategory !== undefined) updateData.commTypeCategory = commTypeCategory;
+			if (location !== undefined) updateData.location = location;
+			if (size !== undefined) updateData.size = size;
+			if (communityInterest !== undefined) updateData.communityInterest = communityInterest;
+			if (interestCategory !== undefined) updateData.interestCategory = interestCategory;
+			if (engagementLevel !== undefined) updateData.engagementLevel = engagementLevel;
+			if (communicationPlatform !== undefined) updateData.communicationPlatform = communicationPlatform;
+			if (communicationCategory !== undefined) updateData.communicationCategory = communicationCategory;
+			if (connCategory !== undefined) updateData.connCategory = connCategory;
+			if (contentShared !== undefined) updateData.contentShared = contentShared;
+			if (communityGoal !== undefined) updateData.communityGoal = communityGoal;
+			if (accessType !== undefined) updateData.accessType = accessType;
+			if (prevCollabType !== undefined) updateData.prevCollabType = prevCollabType;
+			if (usp !== undefined) updateData.usp = usp;
+			if (recognition!== undefined) updateData.recognition= description;
+			if (additionalService !== undefined) updateData.additionalService = additionalService;
+			if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
+			if (telegram !== undefined) updateData.telegram = telegram;
+			if (twitter !== undefined) updateData.twitter = twitter;
+			if (user !== undefined) updateData.user = user;
+
+			const [updated] = await Community.update(updateData, { where: { id: req.params.id } });
 			if (updated) {
 				const updatedCommunity = await Community.findByPk(req.params.id);
 				res.status(200).json(updatedCommunity);
@@ -141,4 +195,4 @@ cloudinary.config({
 	}
 
 
-module.exports = {create, readall, readId, update, deleteId, readByUserId};
+module.exports = {create, readall, countCommunity, readId, update, deleteId, readByUserId};

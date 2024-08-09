@@ -140,14 +140,31 @@ const { Op } = require('sequelize');
         return res.status(401).json({ msg: 'Invalid credentials' });
       }
 
+      const userPayload = {
+        id: user.id,
+        email: user.email,
+        fname: user.firstName,
+        lname: user.lastName
+      };
+
+
       // Generate JWT token
       const accessToken = jwt.sign(
-        { userId: user.id, email: user.email },
+        {user: userPayload},
+        // { userId: user.id, email: user.email },
         process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
         { expiresIn: '14d' } // Token expiration time
       );
 
-      return res.status(200).json({ accessToken });
+            // Generate Refresh Token
+            const refreshToken = jwt.sign(
+              { user: userPayload },
+              process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
+              { expiresIn: '14d' } // Refresh token expiration time
+            );
+      
+
+      return res.status(200).json({ accessToken, refreshToken, user:userPayload });
     } catch (error) {
       console.error('Error logging in:', error);
       return res.status(500).json({ msg: 'Failed to log in', error });

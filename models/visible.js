@@ -52,7 +52,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       communityGoal: {
-        type: DataTypes.STRING,
+        type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true
       },
     size: {
@@ -100,16 +100,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
             },
-    // contentType: {
-    //         type: DataTypes.STRING,
-    //         allowNull: true
-    //         },
+
     connCategory: {
           type: DataTypes.STRING,
           allowNull: true
       },
       contentShared: {
-        type: DataTypes.STRING,
+        type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true
       },
     platformLink: {

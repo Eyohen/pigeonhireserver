@@ -12,21 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
-//       Community.hasOne(models.USER, {
-//         foreignKey: 'CommunityId',
-//         as: 'Community'
-//       }
-//   ),
-//   Community.hasOne(models.User, {
-//     foreignKey: 'CommunityId',
-//     as: 'User'
-//   }
-// )
-// Community.hasMany(models.CollaborationType, {
-//   foreignKey: 'communityId',
-//   as: 'CollaborationType'
-// }
-// );
+
     }
   }
   Community.init({

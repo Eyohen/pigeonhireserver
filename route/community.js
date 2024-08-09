@@ -1,6 +1,6 @@
 const express = require('express');
 
-const {create, readall, readId, update, deleteId, readByUserId} = require('../controller/community')
+const {create, readall, countCommunity, readId, update, deleteId, readByUserId} = require('../controller/community')
 // import verifyToken from '../middleware/verifyToken';
 // import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
 const multer = require('multer');
@@ -22,6 +22,10 @@ router.post(
 router.get(
     '/',
     readall
+);
+router.get(
+    '/count',
+    countCommunity
 );
 router.get(
 	'/:id',

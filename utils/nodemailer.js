@@ -167,7 +167,7 @@ const sendResetPasswordEmail = async (email, otp, resetToken) => {
         </div>
         <div class="content">
             <p>Your OTP for password reset is:</p>
-            <div class="otp">${otp}. </div>
+            <div class="otp">${otp}</div>
             <p>This otp will expire in 10 minutes.</p>
         </div>
         <div class="footer">

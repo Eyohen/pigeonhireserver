@@ -49,7 +49,11 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-
+    },
+    currency: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue:'USD'
     },
     role: {
       type: DataTypes.ENUM,
