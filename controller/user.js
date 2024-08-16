@@ -7,6 +7,7 @@ const { User } = db;
 const {sendVerificationEmail} = require('../utils/nodemailer');
 const crypto = require('crypto');
 const {sendResetPasswordEmail} = require('../utils/nodemailer')
+const { totalmem } = require("os");
 const { Op } = require('sequelize');
 
 
@@ -318,17 +319,41 @@ const resetPassword = async (req, res) => {
     }
   }
 
-  const readall = async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit) || 10;
-      const offset = parseInt(req.query.offset) || 0;
+  // const readall = async (req, res) => {
+  //   try {
+  //     const limit = parseInt(req.query.limit) || 10;
+  //     const offset = parseInt(req.query.offset) || 0;
 
-      const records = await User.findAll({ limit, offset });
-      return res.json(records);
-    } catch (e) {
-      return res.json({ msg: "Failed to read", status: 500, route: "/read" });
-    }
-  }
+  //     const records = await User.findAll({ limit, offset });
+  //     return res.json(records);
+  //   } catch (e) {
+  //     return res.json({ msg: "Failed to read", status: 500, route: "/read" });
+  //   }
+  // }
+  const readall = async (req, res) => {
+		try {
+			const { page = 1, limit = 10, search = ''} = req.query;
+			const offset = (page - 1) * limit;
+
+			const {count, rows: users} = await User.findAndCountAll({
+				where: {
+					firstName:{
+						[Op.iLike]: `%${search}%`
+					},
+
+				},
+				limit: parseInt(limit),
+				offset:parseInt(offset)
+			});
+			return res.json({
+				users,
+				totalPages:Math.ceil(count / limit),
+				currentPage: parseInt(page)
+			});
+		} catch (e) {
+			return res.json({ msg: "fail to read", status: 500, route: "/read" });
+		}
+	}
 
   const readId = async (req, res) => {
     try {
@@ -339,6 +364,34 @@ const resetPassword = async (req, res) => {
       return res.json({ msg: "Failed to read", status: 500, route: "/read/:id" });
     }
   }
+
+  
+	const countUsers = async (req, res) => {
+		try {
+			const { search = '' } = req.query;
+	
+			const count = await User.count({
+				where: {
+					firstName: {
+						[Op.iLike]: `%${search}%`
+					},
+
+				}
+			});
+	
+			return res.json({
+				count: count,
+				status: 200
+			});
+		} catch (e) {
+			console.error("Error counting communities:", e);
+			return res.status(500).json({ 
+				msg: "Failed to count communities", 
+				status: 500, 
+				route: "/count" 
+			});
+		}
+	};
 
   const update = async (req, res) =>{
     try {
@@ -375,4 +428,4 @@ const resetPassword = async (req, res) => {
   }
 
 
-module.exports = {register, login, adminLogin, refresh, readId, readall, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};
+module.exports = {register, login, adminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};

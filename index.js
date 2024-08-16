@@ -14,6 +14,7 @@ const contentShared = require('./route/contentShared')
 const test = require('./route/test')
 const blog = require('./route/blog');
 const collab = require('./route/collab');
+const admin = require('./route/admin');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -65,7 +66,8 @@ app.use("/api/sizes", size);
 app.use("/api/connectioncategories", connCategory);
 app.use("/api/contentshared", contentShared);
 app.use("/api/test", test);
-app.use("/api/posts", blog)
+app.use("/api/posts", blog);
+app.use("/api/admin", admin);
 
 
 if (process.env.NODE_ENV === 'development') {

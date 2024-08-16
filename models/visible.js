@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
+      // Visible.belongsTo(models.User, { foreignKey: 'userId' });
 
     }
   }
@@ -27,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
   },
+  restrict: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+},
     name: {
         type: DataTypes.STRING,
         allowNull: false
@@ -142,6 +147,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true
               },
+              // userId: {
+              //   type: DataTypes.UUID,
+              //   allowNull: false,
+              // },
                
 
   }, {

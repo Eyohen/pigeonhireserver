@@ -45,19 +45,6 @@ cloudinary.config({
 		}
 	}
 
-	// const readall = async (req, res) => {
-	// 	try {
-	// 		const limit = req.query.limit || 10;
-	// 		const offset = req.query.offset;
-
-	// 		const records = await Community.findAll({
-	// 			// include:[{model:Payment, as: 'Payment'},{model:User, as: 'User'}]
-	// 		});
-	// 		return res.json(records);
-	// 	} catch (e) {
-	// 		return res.json({ msg: "fail to read", status: 500, route: "/read" });
-	// 	}
-	// }
 
 	const readall = async (req, res) => {
 		try {
@@ -68,7 +55,8 @@ cloudinary.config({
 				where: {
 					name:{
 						[Op.iLike]: `%${search}%`
-					}
+					},
+					restrict: false
 				},
 				limit: parseInt(limit),
 				offset:parseInt(offset)
@@ -91,7 +79,8 @@ cloudinary.config({
 				where: {
 					name: {
 						[Op.iLike]: `%${search}%`
-					}
+					},
+					restrict: false
 				}
 			});
 	
@@ -105,6 +94,54 @@ cloudinary.config({
 				msg: "Failed to count communities", 
 				status: 500, 
 				route: "/count" 
+			});
+		}
+	};
+
+	const toggleRestrict = async (req, res) => {
+		try {
+			const { id } = req.params;
+			const record = await Community.findByPk(id);
+
+			if(!record){
+				return res.status(404).json({message:'Community not found'});
+			}
+
+			record.restrict = !record.restrict;
+			await record.save();
+
+			return res.status(200).json({message:'Community restricted', record});
+		} catch (error) {
+			return res.status(500).json({ message: "error restricting", status: 500, route: "/read/:id" });
+		}
+	}
+
+	const readRestrictedCommunities = async (req, res) => {
+		try {
+			const { page = 1, limit = 10, search = '' } = req.query;
+			const offset = (page - 1) * limit;
+	
+			const { count, rows: communities } = await Community.findAndCountAll({
+				where: {
+					name: {
+						[Op.iLike]: `%${search}%`
+					},
+					restrict: true // This filters for restricted communities
+				},
+				limit: parseInt(limit),
+				offset: parseInt(offset)
+			});
+	
+			return res.json({
+				communities,
+				totalPages: Math.ceil(count / limit),
+				currentPage: parseInt(page)
+			});
+		} catch (e) {
+			console.error("Error fetching restricted communities:", e);
+			return res.status(500).json({ 
+				msg: "Failed to fetch restricted communities", 
+				status: 500
 			});
 		}
 	};
@@ -131,12 +168,13 @@ cloudinary.config({
 
 	const update = async (req, res) => {
 		try {
-			const {verified,name,description,communityType,commTypeCategory,location,size,communityInterest,interestCategory,engagementLevel,communicationPlatform,communicationCategory,
+			const {restrict, verified,name,description,communityType,commTypeCategory,location,size,communityInterest,interestCategory,engagementLevel,communicationPlatform,communicationCategory,
 				connCategory,contentShared,communityGoal,accessType,prevCollabType,usp,recognition,additionalService,whatsapp,telegram,twitter, user
 			 } = req.body;
 
 			// Prepare update object with only the fields that should be updated
 			const updateData = {};
+			if (restrict !== undefined) updateData.restrict = restrict;
 			if (verified !== undefined) updateData.verified = verified;
 			if (name !== undefined) updateData.name = name;
 			if (recognition!== undefined) updateData.description = description;
@@ -195,4 +233,4 @@ cloudinary.config({
 	}
 
 
-module.exports = {create, readall, countCommunity, readId, update, deleteId, readByUserId};
+module.exports = {create, readall, countCommunity, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readByUserId};

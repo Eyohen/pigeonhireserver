@@ -1,5 +1,5 @@
 const express = require('express');
-const {readId, readall, update, deleteId} = require('../controller/user');
+const {readId, readall, countUsers,update, deleteId} = require('../controller/user');
 // const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -7,6 +7,10 @@ const router = express.Router();
 router.get(
     '/',
     readall
+);
+router.get(
+    '/count',
+    countUsers
 );
 
 router.get(

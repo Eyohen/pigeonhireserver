@@ -45,24 +45,10 @@ cloudinary.config({
 		}
 	}
 
-	// const readall = async (req, res) => {
-	// 	try {
-	// 		const limit = req.query.limit || 10;
-	// 		const offset = req.query.offset;
-
-	// 		const records = await Visible.findAll({
-	// 			// include:[{model:Payment, as: 'Payment'},{model:User, as: 'User'}]
-	// 		});
-	// 		return res.json(records);
-	// 	} catch (e) {
-	// 		return res.json({ msg: "fail to read", status: 500, route: "/read" });
-	// 	}
-	// }
 
 	const readall = async (req, res) => {
 		try {
-			// const limit = req.query.limit || 10;
-			// const offset = req.query.offset;
+	
 			const { page = 1, limit = 10, search = ''} = req.query;
 			const offset = (page - 1) * limit;
 
@@ -70,7 +56,8 @@ cloudinary.config({
 				where: {
 					name:{
 						[Op.iLike]: `%${search}%`
-					}
+					},
+					restrict: false
 				},
 				limit: parseInt(limit),
 				offset:parseInt(offset)
@@ -85,6 +72,81 @@ cloudinary.config({
 		}
 	}
 
+	const countVisible = async (req, res) => {
+		try {
+			const { search = '' } = req.query;
+	
+			const count = await Visible.count({
+				where: {
+					name: {
+						[Op.iLike]: `%${search}%`
+					},
+					restrict: false
+				}
+			});
+	
+			return res.json({
+				count: count,
+				status: 200
+			});
+		} catch (e) {
+			console.error("Error counting communities:", e);
+			return res.status(500).json({ 
+				msg: "Failed to count communities", 
+				status: 500, 
+			
+			});
+		}
+	};
+
+	const toggleRestrict = async (req, res) => {
+		try {
+			const { id } = req.params;
+			const record = await Visible.findByPk(id);
+
+			if(!record){
+				return res.status(404).json({message:'Community not found'});
+			}
+
+			record.restrict = !record.restrict;
+			await record.save();
+
+			return res.status(200).json({message:'Community restricted', record});
+		} catch (error) {
+			return res.status(500).json({ message: "error restricting", status: 500, route: "/read/:id" });
+		}
+	}
+
+	const readRestrictedCommunities = async (req, res) => {
+		try {
+			const { page = 1, limit = 10, search = '' } = req.query;
+			const offset = (page - 1) * limit;
+	
+			const { count, rows: communities } = await Visible.findAndCountAll({
+				where: {
+					name: {
+						[Op.iLike]: `%${search}%`
+					},
+					restrict: true // This filters for restricted communities
+				},
+				limit: parseInt(limit),
+				offset: parseInt(offset)
+			});
+	
+			return res.json({
+				communities,
+				totalPages: Math.ceil(count / limit),
+				currentPage: parseInt(page)
+			});
+		} catch (e) {
+			console.error("Error fetching restricted communities:", e);
+			return res.status(500).json({ 
+				msg: "Failed to fetch restricted communities", 
+				status: 500
+			});
+		}
+	};
+
 	const readId = async (req, res) => {
 		try {
 			const { id } = req.params;
@@ -98,8 +160,8 @@ cloudinary.config({
 	const readByUserId = async (req, res) => {
 		try {
 			const { userId } = req.params;
-			const communities = await Visible.findAll({ where: { user: userId } });
-			return res.json(communities);
+			const record = await Visible.findAll({ where: { user: userId } });
+			return res.json(record);
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read/user/:userId" });
 		}
@@ -141,4 +203,4 @@ cloudinary.config({
 	}
 
 
-module.exports = {create, readall, readId, update, deleteId, readByUserId};
+module.exports = {create, readall, countVisible, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readByUserId};

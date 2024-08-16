@@ -1,6 +1,6 @@
 const express = require('express');
 
-const {create, readall, readId, update, deleteId, readByUserId} = require('../controller/visible')
+const {create, readall, countVisible, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readByUserId} = require('../controller/visible')
 // import verifyToken from '../middleware/verifyToken';
 // import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
 const multer = require('multer');
@@ -24,6 +24,14 @@ router.get(
     readall
 );
 router.get(
+    '/restricted',
+    readRestrictedCommunities
+);
+router.get(
+    '/count',
+    countVisible
+);
+router.get(
 	'/:id',
     // verifyToken,
     readId
@@ -32,6 +40,11 @@ router.put(
     '/:id',
     // verifyToken,
     update
+);
+router.put(
+    '/restrict/:id',
+    // verifyToken,
+    toggleRestrict
 );
 router.delete(
     '/:id',
