@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const {sendResetPasswordEmail} = require('../utils/nodemailer')
 const { totalmem } = require("os");
 const { Op } = require('sequelize');
+const { permission } = require('process');
 
 
   const register = async (req, res) => {
@@ -96,7 +97,8 @@ const { Op } = require('sequelize');
         id: user.id,
         email: user.email,
         fname: user.firstName,
-        lname: user.lastName
+        lname: user.lastName,
+        role: user.role
       };
 
       // Generate JWT token with user object
@@ -130,8 +132,8 @@ const { Op } = require('sequelize');
         return res.status(404).json({ msg: 'User not found' });
       }
 
-      // Check if user's role is admin
-      if (user.role !== 'admin') {
+      // Check if user's role is admin or superadmin
+      if (user.role !== 'admin' && user.role !== 'superadmin') {
         return res.status(401).json({ msg: 'Unauthorized access: Only admins are allowed' });
       }
 
@@ -145,7 +147,61 @@ const { Op } = require('sequelize');
         id: user.id,
         email: user.email,
         fname: user.firstName,
-        lname: user.lastName
+        lname: user.lastName,
+        role: user.role
+      };
+
+
+      // Generate JWT token
+      const accessToken = jwt.sign(
+        {user: userPayload},
+        // { userId: user.id, email: user.email },
+        process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
+        { expiresIn: '14d' } // Token expiration time
+      );
+
+            // Generate Refresh Token
+            const refreshToken = jwt.sign(
+              { user: userPayload },
+              process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
+              { expiresIn: '14d' } // Refresh token expiration time
+            );
+      
+
+      return res.status(200).json({ accessToken, refreshToken, user:userPayload });
+    } catch (error) {
+      console.error('Error logging in:', error);
+      return res.status(500).json({ msg: 'Failed to log in', error });
+    }
+  }
+
+  const superAdminLogin = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      // Check if user with the given email exists
+      const user = await User.findOne({ where: { email } });
+      if (!user) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
+
+      // Check if user's role is admin or superadmin
+      if (user.role !== 'superadmin' ) {
+        return res.status(401).json({ msg: 'Unauthorized access: Only superadmins are allowed' });
+      }
+
+      // Compare the provided password with the hashed password in the database
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ msg: 'Invalid credentials' });
+      }
+
+      const userPayload = {
+        id: user.id,
+        email: user.email,
+        fname: user.firstName,
+        lname: user.lastName,
+        role: user.role
       };
 
 
@@ -428,4 +484,4 @@ const resetPassword = async (req, res) => {
   }
 
 
-module.exports = {register, login, adminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};
+module.exports = {register, login, adminLogin, superAdminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};

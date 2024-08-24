@@ -5,6 +5,7 @@ const { Model, UUIDV4 } = require('sequelize');
 const RoleType = {
   User: 'user',
   Admin: 'admin',
+  SuperAdmin:'superadmin'
 };
 
 module.exports = (sequelize, DataTypes) => {
@@ -56,10 +57,9 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue:'USD'
     },
     role: {
-      type: DataTypes.ENUM,
-      values: Object.values(RoleType),
-      allowNull: false,
-      defaultValue: RoleType.User,
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue:'user'
     },
     password: {
       type: DataTypes.STRING,

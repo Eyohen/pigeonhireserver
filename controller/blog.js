@@ -52,6 +52,7 @@ cloudinary.config({
 
 			const records = await Blog.findAll({
 				// include:[{model:Purchase, as: 'Purchase'},{model:Review, as: 'Review'}]
+				order:[['createdAt', 'DESC']]
 			});
 			return res.json(records);
 		} catch (e) {

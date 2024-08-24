@@ -47,7 +47,8 @@ const { User } = db;
         id: user.id,
         email: user.email,
         fname: user.firstName,
-        lname: user.lastName
+        lname: user.lastName,
+        role: user.role
       };
 
       // Generate JWT token with user object
@@ -82,7 +83,7 @@ const { User } = db;
       }
 
       // Check if user's role is admin
-      if (user.role !== 'admin') {
+      if (user.role !== 'admin' && user.role !== 'superadmin') {
         return res.status(401).json({ msg: 'Unauthorized access: Only admins are allowed' });
       }
 
@@ -96,7 +97,8 @@ const { User } = db;
         id: user.id,
         email: user.email,
         fname: user.firstName,
-        lname: user.lastName
+        lname: user.lastName,
+        role: user.role
       };
 
       // Generate JWT token with user object

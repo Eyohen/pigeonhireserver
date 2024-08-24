@@ -59,7 +59,8 @@ cloudinary.config({
 					restrict: false
 				},
 				limit: parseInt(limit),
-				offset:parseInt(offset)
+				offset:parseInt(offset),
+				order:[['createdAt', 'DESC']]
 			});
 			return res.json({
 				communities,
@@ -129,7 +130,8 @@ cloudinary.config({
 					restrict: true // This filters for restricted communities
 				},
 				limit: parseInt(limit),
-				offset: parseInt(offset)
+				offset: parseInt(offset),
+				order:[['createdAt', 'DESC']]
 			});
 	
 			return res.json({
