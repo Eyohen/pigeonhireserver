@@ -98,7 +98,8 @@ const { permission } = require('process');
         email: user.email,
         fname: user.firstName,
         lname: user.lastName,
-        role: user.role
+        role: user.role,
+        currency:user.currency
       };
 
       // Generate JWT token with user object
@@ -148,7 +149,8 @@ const { permission } = require('process');
         email: user.email,
         fname: user.firstName,
         lname: user.lastName,
-        role: user.role
+        role: user.role,
+        currency:user.currency
       };
 
 

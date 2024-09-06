@@ -6,7 +6,7 @@ const { Model, UUIDV4 } = require('sequelize');
 
 
 module.exports = (sequelize, DataTypes) => {
-  class Size extends Model{
+  class Currency extends Model{
    
     /**
      * Helper method for defining associations.
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
- Size.init({
+ Currency.init({
 
     id: {
       type: DataTypes.UUID,
@@ -29,14 +29,30 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       // autoIncrement: true
     },
-    size: {
+    currency: {
             type: DataTypes.STRING,
             allowNull: false
           },
+    monthly: {
+        type: DataTypes.DECIMAL(10,3),
+        defaultValue: 0,
+        allowNull: false
+        },
+
+    quarterly: {
+        type: DataTypes.DECIMAL(10,3),
+        allowNull: false
+        },
+
+    annually: {
+        type: DataTypes.DECIMAL(10,3),
+        allowNull: false
+        },
+
 
   }, {
     sequelize,
-    modelName: 'Size',
+    modelName: 'Currency',
   });
-  return Size;
+  return Currency;
 };

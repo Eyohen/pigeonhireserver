@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
-      // Visible.belongsTo(models.User, { foreignKey: 'userId' });
+     Visible.belongsTo(models.User, { foreignKey: 'userId' });
 
     }
   }
@@ -147,10 +147,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true
               },
-              // userId: {
-              //   type: DataTypes.UUID,
-              //   allowNull: false,
-              // },
+    userId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        },
                
 
   }, {

@@ -162,7 +162,7 @@ cloudinary.config({
 	const readByUserId = async (req, res) => {
 		try {
 			const { userId } = req.params;
-			const record = await Visible.findAll({ where: { user: userId } });
+			const record = await Visible.findAll({ where: { userId: userId } });
 			return res.json(record);
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read/user/:userId" });

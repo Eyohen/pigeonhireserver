@@ -7,7 +7,7 @@ const path = require("path");
 const { uploadtocloudinary, uploadType } = require("../middleware/cloudinary");
 const db = require("../models");
 const { totalmem } = require("os");
-const { Community, User } = db;
+const { Community, User, CollaborationType } = db;
 const { Op } = require('sequelize');
 
 cloudinary.config({
@@ -60,7 +60,8 @@ cloudinary.config({
 				},
 				limit: parseInt(limit),
 				offset:parseInt(offset),
-				order:[['createdAt', 'DESC']]
+				order:[['createdAt', 'DESC']],
+				include:{model:CollaborationType, as:'collaborationTypes'}
 			});
 			return res.json({
 				communities,
@@ -151,7 +152,9 @@ cloudinary.config({
 	const readId = async (req, res) => {
 		try {
 			const { id } = req.params;
-			const record = await Community.findOne({ where: { id } });
+			const record = await Community.findOne({ where: { id },
+				include:{model:CollaborationType, as:'collaborationTypes'}
+			 });
 			return res.json(record);
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read/:id" });

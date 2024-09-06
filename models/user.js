@@ -2,11 +2,6 @@
 
 const { Model, UUIDV4 } = require('sequelize');
 
-const RoleType = {
-  User: 'user',
-  Admin: 'admin',
-  SuperAdmin:'superadmin'
-};
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -17,13 +12,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-    //   User.belongsToMany(models.Project, {
-    //     through: 'ProjectAssignments', 
-    //     foreignKey: 'userId'
-    //   });
-    //   User.belongsTo(models.Booking, {
-    //     foreignKey: 'bookingId'
-    //   });
+
+    User.hasMany(models.Visible, { foreignKey: 'userId' });
+    User.hasMany(models.CollaborationType, { foreignKey: 'userId' });
     }
   }
 
