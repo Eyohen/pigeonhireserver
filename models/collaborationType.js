@@ -15,14 +15,23 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
-CollaborationType.belongsTo(models.User, { 
+// CollaborationType.belongsTo(models.User, { 
+//     foreignKey: 'userId',
+//   });
+// CollaborationType.belongsTo(models.Community, { 
+//     foreignKey: 'communityId',
+//     as: 'community'
+//   });
+CollaborationType.belongsTo(models.User, {
     foreignKey: 'userId',
     onDelete: 'SET NULL',
     onUpdate: 'CASCADE'
   });
-CollaborationType.belongsTo(models.Community, { 
+  CollaborationType.belongsTo(models.Community, {
     foreignKey: 'communityId',
-    as: 'community'
+    as: 'community',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
   });
     }
   }

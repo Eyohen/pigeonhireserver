@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: UUIDV4,
       allowNull: false,
       primaryKey: true,
-      // autoIncrement: true
+      unique:true
+
     },
     verified: {
       type: DataTypes.BOOLEAN,
@@ -139,6 +140,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Community',
+    indexes: [
+      {
+        unique: true,
+        fields: ['id']
+      }
+    ]
   });
   return Community;
 };
