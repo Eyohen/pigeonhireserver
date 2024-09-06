@@ -14,12 +14,12 @@ module.exports = (sequelize, DataTypes) => {
  
     static associate(models) {
       // define association here
-//       Community.hasOne(models.USER, {
-//         foreignKey: 'CommunityId',
-//         as: 'Community'
-//       }
-//   ),
-CollaborationType.belongsTo(models.User, { foreignKey: 'userId' });
+
+CollaborationType.belongsTo(models.User, { 
+    foreignKey: 'userId',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  });
 CollaborationType.belongsTo(models.Community, { 
     foreignKey: 'communityId',
     as: 'community'
@@ -51,6 +51,10 @@ CollaborationType.belongsTo(models.Community, {
     userId: {
             type: DataTypes.UUID,
             allowNull: true,
+            references: {
+                model: 'Users',
+                key: 'id'
+              }
             },
     communityId: {
         type: DataTypes.UUID,
