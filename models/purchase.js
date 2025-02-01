@@ -3,7 +3,7 @@
 const {Model, UUIDV4} = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class CollaborationType extends Model {
+  class Purchase extends Model {
    
     /**
      * Helper method for defining associations.
@@ -14,41 +14,27 @@ module.exports = (sequelize, DataTypes) => {
  
     static associate(models) {
       // define association here
-
-// CollaborationType.belongsTo(models.User, { 
-//     foreignKey: 'userId',
-//   });
-// CollaborationType.belongsTo(models.Community, { 
-//     foreignKey: 'communityId',
-//     as: 'community'
-//   });
-CollaborationType.belongsTo(models.User, {
+Purchase.belongsTo(models.User, {
     foreignKey: 'userId',
-    as:'user',
     onDelete: 'SET NULL',
     onUpdate: 'CASCADE'
   });
-  CollaborationType.belongsTo(models.Community, {
+  Purchase.belongsTo(models.Community, {
     foreignKey: 'communityId',
     as: 'community',
     onDelete: 'SET NULL',
     onUpdate: 'CASCADE'
   });
-  CollaborationType.belongsTo(models.Owner, {
-    foreignKey: 'ownerId',
-    as: 'owner',
-    onDelete: 'SET NULL',
-    onUpdate: 'CASCADE'
-  });
-  CollaborationType.hasMany(models.Purchase, {
+  Purchase.belongsTo(models.CollaborationType, {
     foreignKey: 'collaborationTypeId',
-    as: 'purchases',
+    as: 'collaborationType',
     onDelete: 'SET NULL',
     onUpdate: 'CASCADE'
   });
+
     }
   }
-  CollaborationType.init({
+  Purchase.init({
 
     id: {
       type: DataTypes.UUID,
@@ -66,10 +52,26 @@ CollaborationType.belongsTo(models.User, {
         defaultValue: 0,
         allowNull: false
           },
-    currency: {
+    currency:{
         type: DataTypes.STRING,
         allowNull: false    
           },
+    communityName: {
+        type: DataTypes.STRING,
+        allowNull: true    
+          },
+    firstName:{
+        type: DataTypes.STRING,
+        allowNull: true    
+          },
+    lastName:{
+        type: DataTypes.STRING,
+        allowNull: true    
+          },
+    email:{
+        type: DataTypes.STRING,
+        allowNull: true    
+            },
     userId: {
             type: DataTypes.UUID,
             allowNull: true,
@@ -86,10 +88,18 @@ CollaborationType.belongsTo(models.User, {
         key: 'id'
         }
     },
+    collaborationTypeId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'CollaborationTypes',
+        key: 'id'
+      }
+    },
     
   }, {
     sequelize,
-    modelName: 'CollaborationType',
+    modelName: 'Purchase',
   });
-  return CollaborationType;
+  return Purchase;
 };

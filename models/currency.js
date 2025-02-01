@@ -34,18 +34,18 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false
           },
     monthly: {
-        type: DataTypes.DECIMAL(10,3),
+        type: DataTypes.DECIMAL(10,2),
         defaultValue: 0,
         allowNull: false
         },
 
     quarterly: {
-        type: DataTypes.DECIMAL(10,3),
+        type: DataTypes.DECIMAL(10,2),
         allowNull: false
         },
 
     annually: {
-        type: DataTypes.DECIMAL(10,3),
+        type: DataTypes.DECIMAL(10,2),
         allowNull: false
         },
 

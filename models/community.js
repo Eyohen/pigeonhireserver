@@ -17,6 +17,16 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborationTypes'
       });
 
+      // Community.belongsTo(models.User, {
+      //   foreignKey: 'user',
+      //   as: 'user'
+      // });
+
+      Community.hasMany(models.Purchase, {
+        foreignKey: 'communityId',
+        as: 'purchases'
+      });
+
     }
   }
   Community.init({
@@ -93,11 +103,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
-    accessType: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            // defaultValue:"Standard",
-          },
     prevCollabType: {
               type: DataTypes.STRING,
               allowNull: true

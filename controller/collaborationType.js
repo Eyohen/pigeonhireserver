@@ -2,7 +2,7 @@ const { Request, Response } = require("express");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require('bcrypt');
 const db = require("../models");
-const {CollaborationType} = db;
+const {CollaborationType, Purchase, User, Community} = db;
 
 
 
@@ -44,7 +44,12 @@ const {CollaborationType} = db;
     const readByUserId = async (req, res) => {
 		try {
 			const { userId } = req.params;
-			const record = await CollaborationType.findAll({ where: { userId: userId } });
+			const record = await CollaborationType.findAll({
+				 where: { userId: userId },
+				 include:[{model:Purchase, as:'purchases'
+				
+				 }]
+			 });
 			return res.json(record);
 		} catch (e) {
 			return res.json({ msg: "fail to read", status: 500, route: "/read/user/:userId" });
@@ -88,4 +93,39 @@ const {CollaborationType} = db;
 	}
 
 
-module.exports = {create, readall, readId, readByUserId, update, deleteId};
+	const getCollaborationTypeWithPurchases = async (req, res) => {
+		try {
+		  const { id } = req.params;
+		  const collaborationType = await CollaborationType.findOne({
+			where: { id },
+			include: [
+			  {
+				model: Purchase,
+				as: 'purchases',
+				include: [
+				  {
+					model: User,
+					attributes: ['id', 'username', 'email']
+				  }
+				]
+			  }
+			]
+		  });
+	  
+		  if (!collaborationType) {
+			return res.status(404).json({ message: 'Collaboration type not found' });
+		  }
+	  
+		  res.json(collaborationType);
+		} catch (error) {
+		  console.error('Error fetching collaboration type with purchases:', error);
+		  res.status(500).json({ message: 'Server error', error: error.message });
+		}
+	  };
+	  
+
+module.exports = {create, readall,
+	 readId, readByUserId, 
+	 update, deleteId,
+	 getCollaborationTypeWithPurchases
+	};

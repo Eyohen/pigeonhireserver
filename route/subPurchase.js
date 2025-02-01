@@ -1,6 +1,6 @@
 const express = require('express');
 
-const {create, readall, readId, update, deleteId, readByUserId, getCollaborationTypeWithPurchases} = require('../controller/collaborationType')
+const {create, readall, readId, update, deleteId, readByUserId, getCurrentSubscription, countActiveSubscriptions, countTotalSubscriptions, upgradeSubscription} = require('../controller/subPurchase')
 // import verifyToken from '../middleware/verifyToken';
 // import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
 // const multer = require('multer');
@@ -24,6 +24,17 @@ router.get(
     '/',
     readall
 );
+
+router.get(
+    '/active',
+    countActiveSubscriptions
+);
+
+router.get(
+    '/total',
+    countTotalSubscriptions
+);
+
 router.get(
 	'/:id',
     // verifyToken,
@@ -40,6 +51,13 @@ router.delete(
     deleteId
 );
 router.get("/user/:userId", readByUserId); 
-router.get("/purchases/:id", getCollaborationTypeWithPurchases); 
+
+router.get("/current-subscription/:id", getCurrentSubscription)
+
+router.patch(
+    '/upgrade/:id',
+    upgradeSubscription
+);
+
 
 module.exports = router;

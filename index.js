@@ -1,8 +1,13 @@
 const express = require('express');
 const db = require ('./models');
+const http = require('http');
+const { initializeSocket } = require('./controller/chat');
+const chatRoutes = require('./route/chat');
 const user = require("./route/user");
 const auth =  require("./route/auth");
 const community =  require('./route/community');
+const owner =  require('./route/owner');
+const comunity =  require('./route/comunity');
 const goal =  require('./route/goal');
 const communityType = require('./route/communityType')
 const size = require('./route/size');
@@ -17,13 +22,22 @@ const collab = require('./route/collab');
 const admin = require('./route/admin');
 const currency = require('./route/currency');
 const collaborationType = require('./route/collaborationType');
+const purchase = require('./route/purchase');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
+const subPurchase = require('./route/subPurchase');
+const review = require('./route/review');
 
 
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+initializeSocket(server);
+
+
 const port = process.env.API_PORT;
 
 
@@ -58,6 +72,7 @@ app.use((req, res, next)=>{
 app.use("/api/auth", auth);
 app.use("/api/users", user);
 app.use("/api/communities", community);
+app.use("/api/owners", owner);
 app.use("/api/visible", visible);
 app.use("/api/communityTypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
@@ -72,12 +87,23 @@ app.use("/api/posts", blog);
 app.use("/api/admin", admin);
 app.use("/api/currencies", currency);
 app.use("/api/collaborationTypes", collaborationType);
+app.use("/api/purchases", purchase);
+app.use("/api/subpurchases", subPurchase)
+app.use('/api/chat', chatRoutes);
+app.use("/api/comunities", comunity);
+app.use("/api/reviews", review);
+
+app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
+    next();
+  });
 
 
 if (process.env.NODE_ENV === 'development') {
     // PORT = process.env.TEST_PORT;
     drop = { force: true };
 }
+
 
 db.sequelize.sync({alter:true}).then(() => {
     console.log('All models were synchronized successfully')

@@ -9,6 +9,7 @@ const db = require("../models");
 const { totalmem } = require("os");
 const { Visible, User } = db;
 const { Op } = require('sequelize');
+const subPurchase = require("../models/subPurchase");
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -46,7 +47,7 @@ cloudinary.config({
 	}
 
 
-	const readall = async (req, res) => {
+	const adminReadall = async (req, res) => {
 		try {
 	
 			const { page = 1, limit = 10, search = ''} = req.query;
@@ -72,6 +73,54 @@ cloudinary.config({
 			return res.json({ msg: "fail to read", status: 500, route: "/read" });
 		}
 	}
+
+
+	const readall = async (req, res) => {
+		try {
+		  const { page = 1, limit = 10, search = '' } = req.query;
+		  const offset = (page - 1) * limit;
+		  const hasActiveSubscription = req.hasActiveSubscription;
+	  
+		  let whereClause = {
+			name: {
+			  [Op.iLike]: `%${search}%`
+			},
+			restrict: false
+		  };
+	  
+		  // Get total count (regardless of subscription status)
+		  const totalCount = await Visible.count({ where: whereClause });
+	  
+		  // Determine which fields to return based on subscription status
+		  const attributes = hasActiveSubscription 
+			? undefined // All fields
+			: ['name', 'description', 'communityType'];
+	  
+		  // Fetch communities
+		  let { rows: communities } = await Visible.findAndCountAll({
+			where: whereClause,
+			limit: hasActiveSubscription ? parseInt(limit) : 2,
+			offset: hasActiveSubscription ? parseInt(offset) : 0,
+			order: [['createdAt', 'DESC']],
+			attributes: attributes
+		  });
+	  
+		  // If no active subscription, limit to 2 communities
+		  if (!hasActiveSubscription && communities.length > 2) {
+			communities = communities.slice(0, 2);
+		  }
+	  
+		  return res.json({
+			communities,
+			totalPages: Math.ceil(totalCount / limit),
+			currentPage: parseInt(page),
+			totalCount: totalCount
+		  });
+		} catch (e) {
+		  console.error("Error in readall:", e);
+		  return res.status(500).json({ msg: "Failed to read communities", error: e.message });
+		}
+	  };
 
 	const countVisible = async (req, res) => {
 		try {
@@ -159,16 +208,6 @@ cloudinary.config({
 		}
 	}
 
-	const readByUserId = async (req, res) => {
-		try {
-			const { userId } = req.params;
-			const record = await Visible.findAll({ where: { userId: userId } });
-			return res.json(record);
-		} catch (e) {
-			return res.json({ msg: "fail to read", status: 500, route: "/read/user/:userId" });
-		}
-	}
-
 	const update = async (req, res) => {
 		try {
 			// const { title, content } = req.body;
@@ -204,5 +243,51 @@ cloudinary.config({
 		}
 	}
 
+	const getAllVisiblesByUserId = async (req, res) => {
+		try {
+			const { userId } = req.params;
+			const { page = 1, limit = 10, search = '' } = req.query;
+			const offset = (page - 1) * limit;
+	
+			console.log("Received userId:", userId); // Debug log
+	
+			if (!userId) {
+				return res.status(400).json({ msg: "User ID is required" });
+			}
+	
+			const { count, rows: visibles } = await Visible.findAndCountAll({
+				where: { 
+					user: userId,
+					name: {
+						[Op.iLike]: `%${search}%`
+					}
+				},
+				limit: parseInt(limit),
+				offset: parseInt(offset),
+				order: [['createdAt', 'DESC']],
+				include: [
+					{
+						model: db.User,
+						attributes: ['id', 'email']
+					}
+				]
+			});
+	
+			console.log("Found visibles:", visibles.length); // Debug log
+	
+			return res.status(200).json({
+				visibles,
+				totalPages: Math.ceil(count / limit),
+				currentPage: parseInt(page)
+			});
+		} catch (error) {
+			console.error("Error fetching visibles by user ID:", error);
+			return res.status(500).json({ 
+				msg: "Failed to fetch visibles by user ID", 
+				error: error.message 
+			});
+		}
+	};
 
-module.exports = {create, readall, countVisible, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readByUserId};
+
+module.exports = {create, readall, countVisible, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, getAllVisiblesByUserId, adminReadall};

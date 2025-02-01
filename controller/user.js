@@ -3,13 +3,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../models');
 // const RequestWithUser = require('../utils/RequestWithUser');
-const { User } = db;
+const { User, Review } = db;
 const {sendVerificationEmail} = require('../utils/nodemailer');
 const crypto = require('crypto');
 const {sendResetPasswordEmail} = require('../utils/nodemailer')
 const { totalmem } = require("os");
 const { Op } = require('sequelize');
 const { permission } = require('process');
+const { subscribe } = require('diagnostics_channel');
 
 
   const register = async (req, res) => {
@@ -72,9 +73,24 @@ const { permission } = require('process');
   }
 
 
+  // creating users from the dashboard
+  const create = async (req, res) => {
+		try {
+		
+			// create menu record in the database
+			const record = await User.create({ ...req.body});
+			return res.status(200).json({ record, msg: "Successfully created Community Owner" });
+		} catch (error) {
+			console.log("henry", error);
+			return res.status(500).json({ msg: "fail to create", error });
+		}
+	}
+
+
+
   const login = async (req, res) => {
     try {
-      const { firstName, lastName, email, password } = req.body;
+      const { firstName, lastName, email, password, subscribed } = req.body;
 
       // Check if user with the given email exists
       const user = await User.findOne({ where: { email } });
@@ -99,7 +115,8 @@ const { permission } = require('process');
         fname: user.firstName,
         lname: user.lastName,
         role: user.role,
-        currency:user.currency
+        currency:user.currency,
+        subscribed:user.subscribed
       };
 
       // Generate JWT token with user object
@@ -377,17 +394,7 @@ const resetPassword = async (req, res) => {
     }
   }
 
-  // const readall = async (req, res) => {
-  //   try {
-  //     const limit = parseInt(req.query.limit) || 10;
-  //     const offset = parseInt(req.query.offset) || 0;
 
-  //     const records = await User.findAll({ limit, offset });
-  //     return res.json(records);
-  //   } catch (e) {
-  //     return res.json({ msg: "Failed to read", status: 500, route: "/read" });
-  //   }
-  // }
   const readall = async (req, res) => {
 		try {
 			const { page = 1, limit = 10, search = ''} = req.query;
@@ -401,7 +408,17 @@ const resetPassword = async (req, res) => {
 
 				},
 				limit: parseInt(limit),
-				offset:parseInt(offset)
+				offset:parseInt(offset),
+        include: [{
+          model: Review,
+          // Don't need 'as' since we didn't specify an alias in the association
+          attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
+          include: [{
+              model: User,
+              as: 'Reviewer',
+              attributes: ['firstName', 'lastName']
+          }]
+      }],
 			});
 			return res.json({
 				users,
@@ -416,7 +433,17 @@ const resetPassword = async (req, res) => {
   const readId = async (req, res) => {
     try {
       const { id } = req.params;
-      const record = await User.findOne({ where: { id } });
+      const record = await User.findOne({ where: { id },
+        include: [{
+          model: Review,
+          attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
+          include: [{
+              model: User,
+              as: 'Reviewer',
+              attributes: ['firstName', 'lastName']
+          }]
+      }]
+      });
       return res.json(record);
     } catch (e) {
       return res.json({ msg: "Failed to read", status: 500, route: "/read/:id" });
@@ -486,4 +513,73 @@ const resetPassword = async (req, res) => {
   }
 
 
-module.exports = {register, login, adminLogin, superAdminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP};
+  const readSubscribedUsers = async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+      const offset = (page - 1) * limit;
+  
+      // Find the user to check their subscription status
+      const currentUser = await User.findByPk(userId);
+      
+      if (!currentUser) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
+  
+      let users;
+      let count;
+  
+      if (currentUser.subscribed) {
+        // If user is subscribed, return all users
+        const result = await User.findAndCountAll({
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          include: [{
+            model: Review,
+            attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
+            include: [{
+              model: User,
+              as: 'Reviewer',
+              attributes: ['firstName', 'lastName']
+            }]
+          }]
+        });
+        
+        users = result.rows;
+        count = result.count;
+      } else {
+        // If user is not subscribed, return only 3 users
+        const result = await User.findAndCountAll({
+          limit: 3,
+          include: [{
+            model: Review,
+            attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
+            include: [{
+              model: User,
+              as: 'Reviewer',
+              attributes: ['firstName', 'lastName']
+            }]
+          }]
+        });
+        
+        users = result.rows;
+        count = result.count;
+      }
+  
+      return res.json({
+        users,
+        totalPages: Math.ceil(count / limit),
+        currentPage: parseInt(page)
+      });
+    } catch (e) {
+      console.error('Error fetching users:', e);
+      return res.status(500).json({ 
+        msg: "Failed to fetch users", 
+        status: 500 
+      });
+    }
+  };
+
+
+
+module.exports = {register, create, login, adminLogin, superAdminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP, readSubscribedUsers};

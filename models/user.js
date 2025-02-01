@@ -10,11 +10,14 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
+
     static associate(models) {
       // define association here
 
+    User.hasMany(models.Review, { foreignKey: 'userId' });
+    User.hasMany(models.Review, { foreignKey: 'reviewerId', as: 'ReviewsMade' });
     User.hasMany(models.Visible, { foreignKey: 'userId' });
-    User.hasMany(models.CollaborationType, { foreignKey: 'userId' });
+    User.hasMany(models.Comunity, { foreignKey: 'userId', as: 'users'});
     }
   }
 
@@ -26,6 +29,14 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
   
     },
+    restrict: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+  },
+  subscribed: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
     firstName: {
       type: DataTypes.STRING,
       allowNull: false
@@ -42,6 +53,43 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    location: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    rating: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 5
+      },
+    review: {
+      type: DataTypes.ARRAY(DataTypes.STRING), 
+      allowNull: true
+        },
+    recognition: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    twitter: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    telegram: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    whatsapp: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    linkedin: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     currency: {
       type: DataTypes.STRING,
