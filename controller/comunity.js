@@ -196,37 +196,37 @@ const readByUserId = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
+    // First check if user exists and get their subscription status
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
     const queryOptions = {
-      where: { userId },
       include: [{ model: Owner, as: "owner" }, { model: User, as: "user" }],
       order: [["createdAt", "DESC"]]
     };
 
+    // Set limits based on subscription status
     if (!user.subscribed) {
-      queryOptions.limit = 3;
+      queryOptions.limit = 8;  // Non-subscribed users see only 8 communities
     } else {
       queryOptions.limit = parseInt(limit);
-      queryOptions.offset = parseInt(offset);
+      queryOptions.offset = parseInt(offset);  // Pagination for subscribed users
     }
 
     const { count, rows: communities } = await Comunity.findAndCountAll(queryOptions);
 
     return res.json({
       communities,
-      totalPages: Math.ceil(count / (user.subscribed ? limit : 3)),
+      totalPages: Math.ceil(count / (user.subscribed ? limit : 8)),
       currentPage: parseInt(page),
       isSubscribed: user.subscribed
     });
   } catch (e) {
     return res.status(500).json({ msg: "Failed to read communities", error: e.message });
   }
-}
-
+};
 
 const update = async (req, res) => {
   try {

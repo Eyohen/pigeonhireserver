@@ -16,12 +16,12 @@ module.exports = async (
 ) => {
   try {
     const transporter = nodemailer.createTransport({
-    //   host: "smtp.zoho.com",
-    //   port: 587,
-    //   secure: false,
-      host: "smtp.gmail.com",
-      port: 465, // SMTP port for secure connections
-      secure: true, // true for 465, false for other ports
+      host: "smtp.zoho.com",
+      port: 587,
+      secure: false,
+      // host: "smtp.gmail.com",
+      // port: 465, // SMTP port for secure connections
+      // secure: true, // true for 465, false for other ports
 
       auth: {
         user: process.env.EMAIL_USER,

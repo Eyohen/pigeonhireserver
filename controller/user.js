@@ -16,11 +16,12 @@ const { subscribe } = require('diagnostics_channel');
   const register = async (req, res) => {
     try {
       const { firstName, lastName, email, password } = req.body;
+      console.log('Received data:', req.body);
 
       // Check if user with the given email already exists
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
-        return res.status(400).json({ msg: 'invalid credentials used' });
+        return res.status(400).json({ msg: 'Email already exists' });
       }
 
       // Hash the password
@@ -30,7 +31,10 @@ const { subscribe } = require('diagnostics_channel');
       const verificationToken = await uuidv4();
 
       // Create the user record with hashed password
-      const record = await User.create({ ...req.body, email, password: hashedPassword, verificationToken });
+      const record = await User.create({ ...req.body, email, password: hashedPassword, verificationToken }).catch(err => {
+        console.log('Database error:', err);
+        throw err;
+      });
 
       //send verification email
       sendVerificationEmail(email, verificationToken);
@@ -38,7 +42,7 @@ const { subscribe } = require('diagnostics_channel');
 
       return res.status(200).json({ record, msg: "User successfully created" });
     } catch (error) {
-      console.log("henry", error);
+      console.log("Registration error", error);
       return res.status(500).json({ msg: "Failed to register user", error });
     }
   }
@@ -550,7 +554,7 @@ const resetPassword = async (req, res) => {
       } else {
         // If user is not subscribed, return only 3 users
         const result = await User.findAndCountAll({
-          limit: 3,
+          limit: 10,
           include: [{
             model: Review,
             attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],

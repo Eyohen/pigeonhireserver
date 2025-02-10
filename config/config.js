@@ -10,10 +10,10 @@ module.exports = {
     // "host": "127.0.0.1",
     "dialect": "postgres",
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
+      // ssl: {
+      //   require: true,
+      //   rejectUnauthorized: false,
+      // },
     },
   },
   "test": {
