@@ -41,7 +41,14 @@ app.use("/api/subpurchases/webhook", express.raw({ type: "application/json" }));
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(express.json());
-app.use(cors());
+
+app.use(cors({
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: false  // Set to false when using origin: '*'
+}));
+
 
 db.sequelize
   .authenticate()

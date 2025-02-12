@@ -153,43 +153,6 @@ const readId = async (req, res) => {
 };
 
 
-// const readByUserId = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     const { page = 1, limit = 10 } = req.query;
-//     const offset = (page - 1) * limit;
-
-//     const user = await User.findByPk(userId);
-//     if (!user) {
-//       return res.status(404).json({ msg: "User not found" });
-//     }
-
-//     const queryOptions = {
-//       where: { userId },
-//       include: [{ model: Owner, as: "owner" }, { model: User, as: "user" }],
-//       order: [["createdAt", "DESC"]]
-//     };
-
-//     if (!user.subscribed) {
-//       queryOptions.limit = 3;
-//     } else {
-//       queryOptions.limit = parseInt(limit);
-//       queryOptions.offset = parseInt(offset);
-//     }
-
-//     const { count, rows: communities } = await Comunity.findAndCountAll(queryOptions);
-
-//     return res.json({
-//       communities,
-//       totalPages: Math.ceil(count / (user.subscribed ? limit : 3)),
-//       currentPage: parseInt(page),
-//       isSubscribed: user.subscribed
-//     });
-//   } catch (e) {
-//     return res.status(500).json({ msg: "Failed to read communities", error: e.message });
-//   }
-// }
-
 const readByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
