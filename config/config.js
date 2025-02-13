@@ -10,10 +10,7 @@ module.exports = {
     // "host": "127.0.0.1",
     "dialect": "postgres",
     dialectOptions: {
-      // ssl: {
-      //   require: true,
-      //   rejectUnauthorized: false,
-      // },
+      ssl: false
     },
   },
   "test": {
@@ -30,10 +27,7 @@ module.exports = {
     "host": process.env.DB_HOST,
     "dialect": "postgres",
     dialectOptions: {
-      // ssl: {
-      //   require: true,
-      //   rejectUnauthorized: false,
-      // },
+      ssl: false
     },
   }
 }
