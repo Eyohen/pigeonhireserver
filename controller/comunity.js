@@ -153,43 +153,6 @@ const readId = async (req, res) => {
 };
 
 
-const readByUserId = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const offset = (page - 1) * limit;
-
-    // First check if user exists and get their subscription status
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
-    const queryOptions = {
-      include: [{ model: Owner, as: "owner" }, { model: User, as: "user" }],
-      order: [["createdAt", "DESC"]]
-    };
-
-    // Set limits based on subscription status
-    if (!user.subscribed) {
-      queryOptions.limit = 8;  // Non-subscribed users see only 8 communities
-    } else {
-      queryOptions.limit = parseInt(limit);
-      queryOptions.offset = parseInt(offset);  // Pagination for subscribed users
-    }
-
-    const { count, rows: communities } = await Comunity.findAndCountAll(queryOptions);
-
-    return res.json({
-      communities,
-      totalPages: Math.ceil(count / (user.subscribed ? limit : 8)),
-      currentPage: parseInt(page),
-      isSubscribed: user.subscribed
-    });
-  } catch (e) {
-    return res.status(500).json({ msg: "Failed to read communities", error: e.message });
-  }
-};
 
 const update = async (req, res) => {
   try {
@@ -262,6 +225,44 @@ const deleteId = async (req, res) => {
   }
 };
 
+const readUserCommunities = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: communities } = await Comunity.findAndCountAll({
+      where: {
+        userId: userId,  // Filter by userId
+        title: {
+          [Op.iLike]: `%${search}%`,
+        }
+      },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [["createdAt", "DESC"]],
+      include: [
+        { model: Owner, as: "owner" },
+        { model: User, as: "user" }
+      ],
+    });
+
+    return res.json({
+      communities,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+    });
+  } catch (e) {
+    console.error("Error fetching user communities:", e);
+    return res.status(500).json({
+      msg: "Failed to fetch user communities",
+      status: 500,
+      route: "/:userId/communities"
+    });
+  }
+};
+
+
 
 module.exports = {
   create,
@@ -272,5 +273,5 @@ module.exports = {
   readId,
   update,
   deleteId,
-  readByUserId,
+  readUserCommunities 
 };

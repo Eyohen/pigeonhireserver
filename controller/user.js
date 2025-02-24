@@ -309,6 +309,10 @@ const verifyOTP = async (req, res) => {
     const {otp} = req.body;
     const resetToken = req.headers['x-reset-token']; //  get the reset token from headers
 
+    if (!otp){
+      return res.status(400).json({msg:'OTP is required'});
+    }
+
     if(!resetToken) {
       return res.status(400).json({msg:'Reset token is required'});
     }
@@ -327,7 +331,7 @@ const verifyOTP = async (req, res) => {
 
     //check if OTP is valid
     if(user.resetPasswordOTP !== otp){
-      return res.status(400).json({sg:'Invalid OTP'});
+      return res.status(400).json({msg:'Invalid OTP'});
     }
 
 

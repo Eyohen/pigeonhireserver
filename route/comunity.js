@@ -1,6 +1,6 @@
 const express = require('express');
 
-const {create, readall, countCommunity, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readByUserId} = require('../controller/comunity')
+const {create, readall, countCommunity, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readUserCommunities} = require('../controller/comunity')
 
 const router = express.Router();
 
@@ -42,6 +42,6 @@ router.delete(
     // verifyToken,
     deleteId
 );
-router.get("/user/:userId", readByUserId); 
+router.get("/:userId/communities", readUserCommunities); 
 
 module.exports = router;
