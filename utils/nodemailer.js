@@ -32,62 +32,134 @@ const sendVerificationEmail = (email, token) => {
     <title>Verify Your Email</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
             color: #333;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            line-height: 1.6;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
         }
         .header h1 {
             color: #F08E1F;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .logo img {
+            height: 50px;
         }
         .content {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 35px;
         }
         .content p {
             font-size: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            color: #555;
         }
         .button {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 30px;
             background-color: #F08E1F;
             color: #fff;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(240, 142, 31, 0.3);
+        }
+        .button:hover {
+            background-color: #e07d10;
         }
         .footer {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            font-size: 14px;
+            color: #888;
+        }
+        .help-text {
+            margin-top: 25px;
             font-size: 14px;
             color: #777;
+            text-align: center;
+        }
+        .social-links {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 8px;
+            color: #555;
+            text-decoration: none;
+        }
+        .verification-code {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin: 25px 0;
+            color: #333;
+        }
+        @media only screen and (max-width: 480px) {
+            .container {
+                padding: 25px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Email Verification</h1>
+            <!-- Optional: Add your logo here -->
+            <div class="logo">
+                <img src="/api/placeholder/150/50" alt="Your Logo">
+            </div>
+            <h1>Verify Your Email Address</h1>
         </div>
+        
         <div class="content">
-            <p>Please verify your email address by clicking the link below:</p>
-            <a href="${process.env.FRONTEND_URL}/verify?token=${token}" class="button">Verify Email</a>
+            <p>Thank you for signing up! To complete your registration and access your account, please verify your email address by clicking the button below:</p>
+            
+            <a href="${process.env.FRONTEND_URL}/verify?token=${token}" class="button">Verify My Email</a>
+            
+            <div class="help-text">
+                <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+                <p style="font-size: 12px; color: #999;">${process.env.FRONTEND_URL}/verify?token=${token}</p>
+            </div>
         </div>
+        
         <div class="footer">
-            <p>If you did not request this email, please ignore it.</p>
+            <p>If you did not create an account with us, please disregard this email.</p>
+            <p>Need help? Contact our support team at <a href="mailto:support@yourcompany.com" style="color: #F08E1F; text-decoration: none;">support@yourcompany.com</a></p>
+            
+            
+            <p style="margin-top: 20px; font-size: 12px;">© 2025 Your Company. All rights reserved.</p>
         </div>
     </div>
 </body>

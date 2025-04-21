@@ -5,8 +5,8 @@ module.exports = (sequelize, DataTypes) => {
   class Review extends Model {
     static associate(models) {
 
-      Review.belongsTo(models.User, { foreignKey: 'userId', as:'User' });
-      Review.belongsTo(models.User, { foreignKey: 'reviewerId', as:'Reviewer' });
+      // Review.belongsTo(models.User, { foreignKey: 'userId', as:'User' });
+      // Review.belongsTo(models.User, { foreignKey: 'reviewerId', as:'Reviewer' });
     }
   }
   Review.init({
