@@ -6,6 +6,7 @@ const chatRoutes = require("./route/chat");
 const user = require("./route/user");
 const auth = require("./route/auth");
 const owner = require("./route/owner");
+const publicOwner = require("./route/publicOwner");
 const comunity = require("./route/comunity");
 const goal = require("./route/goal");
 const communityType = require("./route/communityType");
@@ -76,7 +77,8 @@ app.use((req, res, next) => {
 app.use("/api/auth", auth);
 app.use("/api/users", user);
 app.use("/api/owners", owner);
-app.use("/api/communityTypes", communityType);
+app.use("/api/publicowners", publicOwner);
+app.use("/api/communitytypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
 app.use("/api/communicationPlatforms", communicationPlatform);
 app.use("/api/goals", goal);
@@ -103,6 +105,11 @@ app.use((err, req, res, next) => {
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
   next();
+});
+
+// Basic health check endpoint - public access
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Pigeonhire API service is running' });
 });
 
 if (process.env.NODE_ENV === "development") {
