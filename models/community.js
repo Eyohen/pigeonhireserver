@@ -3,7 +3,7 @@
 const { Model, UUIDV4 } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class Comunity extends Model {
+  class Community extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -12,19 +12,19 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
-      //   Comunity.hasMany(models.CollaborationType, {
-      //     foreignKey: 'ComunityId',
+      //   Community.hasMany(models.CollaborationType, {
+      //     foreignKey: 'CommunityId',
       //     as: 'collaborationTypes'
       //   });
 
-      // Comunity.belongsTo(models.Owner, {
+      // Community.belongsTo(models.Owner, {
       //   foreignKey: 'ownerId',
       //   as: 'owner',
       //   targetKey: 'id',
       //   onDelete: 'CASCADE'
 
       // });
-      // Comunity.belongsTo(models.User, {
+      // Community.belongsTo(models.User, {
       //   foreignKey: 'userId',
       //   as: 'user',
       //   targetKey: 'id',
@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       // });
     }
   }
-  Comunity.init(
+  Community.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -58,15 +58,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      title: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       phone: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-    
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -76,10 +75,22 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       commTypeCategory: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
+      communityInterest: {
         type: DataTypes.STRING,
         allowNull: true,
       },
+    //   commCategory: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    //   },
       established: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      size: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -87,19 +98,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      communityGoal: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: true,
-      },
-      size: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      communityInterest: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      interestCategory: {
+      state: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -107,28 +106,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      communicationPlatform: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      communicationCategory: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      accessType: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        // defaultValue:"Standard",
-      },
       frequency: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      days: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      connCategory: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -136,13 +114,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
       },
-      platformLink: {
+      communicationPlatform: {
         type: DataTypes.STRING,
         allowNull: true,
-        // defaultValue:"Standard",
       },
-      imageUrl: {
-        type: DataTypes.STRING,
+      communityGoal: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
       },
       usp: {
@@ -154,6 +131,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       additionalService: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      communicationCategory: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      accessType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      website: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -169,6 +158,25 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      days: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      connCategory: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      platformLink: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        // defaultValue:"Standard",
+      },
+      imageUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+    
+
       ownerId: {
         type: DataTypes.UUID,
         allowNull: true,
@@ -190,9 +198,9 @@ module.exports = (sequelize, DataTypes) => {
     },  
     {
       sequelize,
-      modelName: "Comunity",
+      modelName: "Community",
        tableName: "Comunities"
     }
   );
-  return Comunity;
+  return Community;
 };

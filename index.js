@@ -8,6 +8,7 @@ const auth = require("./route/auth");
 const owner = require("./route/owner");
 const publicOwner = require("./route/publicOwner");
 const comunity = require("./route/comunity");
+const community = require("./route/community");
 const goal = require("./route/goal");
 const communityType = require("./route/communityType");
 const size = require("./route/size");
@@ -92,6 +93,7 @@ app.use("/api/currencies", currency);
 app.use("/api/subpurchases", subPurchase);
 app.use("/api/chat", chatRoutes);
 app.use("/api/comunities", comunity);
+app.use("/api/communities", community);
 app.use("/api/reviews", review);
 
 app.use((err, req, res, next) => {
