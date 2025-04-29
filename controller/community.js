@@ -34,32 +34,43 @@ const create = async (req, res) => {
   }
 };
 
-const readall = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = "" } = req.query;
-    const offset = (page - 1) * limit;
 
-    const { count, rows: communities } = await Community.findAndCountAll({
-      where: {
-        title: {
-          [Op.iLike]: `%${search}%`,
+const readall = async (req, res) => {
+    try {
+      const { page = 1, limit = 10, search = "" } = req.query;
+      const offset = (page - 1) * limit;
+  
+      const { count, rows: communities } = await Community.findAndCountAll({
+        where: {
+          name: {  // Changed from 'title' to 'name' to match the model
+            [Op.iLike]: `%${search}%`,
+          },
+          restrict: false,
         },
-        restrict: false,
-      },
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [["createdAt", "DESC"]],
-      include: [{ model: Owner, as: "owner" },{ model: User, as: "user" }],
-    });
-    return res.json({
-      communities,
-      totalPages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
-    });
-  } catch (e) {
-    return res.json({ msg: "fail to read", status: 500, route: "/read" });
-  }
-};
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [["createdAt", "DESC"]],
+        // include: [
+        //   { model: Owner, as: "owner" },
+        //   { model: User, as: "user" }
+        // ],
+      });
+      
+      return res.json({
+        communities,
+        totalPages: Math.ceil(count / limit),
+        currentPage: parseInt(page),
+      });
+    } catch (error) {
+      console.error("Error reading communities:", error);
+      return res.status(500).json({ 
+        msg: "Failed to read communities", 
+        status: 500, 
+        route: "/read",
+        error: error.message
+      });
+    }
+  };
 
 const countCommunity = async (req, res) => {
   try {
