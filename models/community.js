@@ -199,7 +199,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Community",
-       tableName: "Comunities"
+       tableName: "Communities"
     }
   );
   return Community;
