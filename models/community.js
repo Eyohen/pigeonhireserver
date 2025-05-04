@@ -12,25 +12,13 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
-      //   Community.hasMany(models.CollaborationType, {
-      //     foreignKey: 'CommunityId',
-      //     as: 'collaborationTypes'
-      //   });
+        Community.hasMany(models.Connector, {
+          sourceKey:'name',  
+          foreignKey: 'communityName',
+          as: 'connectors'
+        });
 
-      // Community.belongsTo(models.Owner, {
-      //   foreignKey: 'ownerId',
-      //   as: 'owner',
-      //   targetKey: 'id',
-      //   onDelete: 'CASCADE'
-
-      // });
-      // Community.belongsTo(models.User, {
-      //   foreignKey: 'userId',
-      //   as: 'user',
-      //   targetKey: 'id',
-      //   onDelete: 'CASCADE'
-
-      // });
+      
     }
   }
   Community.init(
@@ -65,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true
       },
       description: {
         type: DataTypes.TEXT,
@@ -82,10 +71,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-    //   commCategory: {
-    //     type: DataTypes.STRING,
-    //     allowNull: true,
-    //   },
+
       established: {
         type: DataTypes.STRING,
         allowNull: true,

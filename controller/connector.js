@@ -7,7 +7,7 @@ const path = require("path");
 const { uploadtocloudinary, uploadType } = require("../middleware/cloudinary");
 const db = require("../models");
 const { totalmem } = require("os");
-const { Community, Connector } = db;
+const { Connector, Community } = db;
 const { Op } = require("sequelize");
 
 cloudinary.config({
@@ -20,14 +20,22 @@ const create = async (req, res) => {
   try {
 
     console.log("Received data:", req.body);
-    console.log("Owner ID:", req.body.ownerId);
+
+    const community = await Community.findOne({
+        where: {name: req.body.communityName}
+    }) 
+
+    if (!community && req.body.communityName){
+        return res.status(404).json({msg:"Community not found"});
+    }
 
 
-    // create menu record in the database
-    const record = await Community.create({ ...req.body});
+
+    // create connector record in the database
+    const record = await Connector.create({ ...req.body});
     return res
       .status(200)
-      .json({ record, msg: "Successfully created Community" });
+      .json({ record, msg: "Successfully created Connector" });
   } catch (error) {
     console.error("Error in create:", error);
     return res.status(500).json({ msg: "fail to create", error });
@@ -40,9 +48,9 @@ const readall = async (req, res) => {
       const { page = 1, limit = 10, search = "" } = req.query;
       const offset = (page - 1) * limit;
   
-      const { count, rows: communities } = await Community.findAndCountAll({
+      const { count, rows: connectors } = await Connector.findAndCountAll({
         where: {
-          name: {  // Changed from 'title' to 'name' to match the model
+          firstName: {  // Changed from 'title' to 'name' to match the model
             [Op.iLike]: `%${search}%`,
           },
           restrict: false,
@@ -51,20 +59,20 @@ const readall = async (req, res) => {
         offset: parseInt(offset),
         order: [["createdAt", "DESC"]],
         include: [
-          { model: Connector, as: "connectors" }
- 
+          { model: Community, as: "community" }
+
         ],
       });
       
       return res.json({
-        communities,
+        connectors,
         totalPages: Math.ceil(count / limit),
         currentPage: parseInt(page),
       });
     } catch (error) {
-      console.error("Error reading communities:", error);
+      console.error("Error reading connectors:", error);
       return res.status(500).json({ 
-        msg: "Failed to read communities", 
+        msg: "Failed to read connectors", 
         status: 500, 
         route: "/read",
         error: error.message
@@ -72,11 +80,11 @@ const readall = async (req, res) => {
     }
   };
 
-const countCommunity = async (req, res) => {
+const countConnector = async (req, res) => {
   try {
     const { search = "" } = req.query;
 
-    const count = await Community.count({
+    const count = await Connector.count({
       where: {
         name: {
           [Op.iLike]: `%${search}%`,
@@ -90,9 +98,9 @@ const countCommunity = async (req, res) => {
       status: 200,
     });
   } catch (e) {
-    console.error("Error counting communities:", e);
+    console.error("Error counting connectors:", e);
     return res.status(500).json({
-      msg: "Failed to count communities",
+      msg: "Failed to count connectors",
       status: 500,
       route: "/count",
     });
@@ -102,16 +110,16 @@ const countCommunity = async (req, res) => {
 const toggleRestrict = async (req, res) => {
   try {
     const { id } = req.params;
-    const record = await Community.findByPk(id);
+    const record = await Connector.findByPk(id);
 
     if (!record) {
-      return res.status(404).json({ message: "Community not found" });
+      return res.status(404).json({ message: "Connector not found" });
     }
 
     record.restrict = !record.restrict;
     await record.save();
 
-    return res.status(200).json({ message: "Community restricted", record });
+    return res.status(200).json({ message: "Connector restricted", record });
   } catch (error) {
     return res
       .status(500)
@@ -124,7 +132,7 @@ const readRestrictedCommunities = async (req, res) => {
     const { page = 1, limit = 10, search = "" } = req.query;
     const offset = (page - 1) * limit;
 
-    const { count, rows: communities } = await Community.findAndCountAll({
+    const { count, rows: communities } = await Connector.findAndCountAll({
       where: {
         name: {
           [Op.iLike]: `%${search}%`,
@@ -153,7 +161,7 @@ const readRestrictedCommunities = async (req, res) => {
 const readId = async (req, res) => {
   try {
     const { id } = req.params;
-    const record = await Community.findOne({
+    const record = await Connector.findOne({
       where: { id },
       include: [{ model: Owner, as: "owner" },{ model: User, as: "user" }],
     });
@@ -202,24 +210,24 @@ const update = async (req, res) => {
     if (twitter !== undefined) updateData.twitter = twitter;
     if (user !== undefined) updateData.user = user;
 
-    const [updated] = await Community.update(updateData, {
+    const [updated] = await Connector.update(updateData, {
       where: { id: req.params.id },
     });
     if (updated) {
-      const updatedOwner = await Community.findByPk(req.params.id);
+      const updatedOwner = await Connector.findByPk(req.params.id);
       res.status(200).json(updatedOwner);
     } else {
-      res.status(404).json({ message: "Community not found" });
+      res.status(404).json({ message: "Connector not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error updating the Community", error });
+    res.status(500).json({ message: "Error updating the Connector", error });
   }
 };
 
 const deleteId = async (req, res) => {
   try {
     const { id } = req.params;
-    const record = await Community.findOne({ where: { id } });
+    const record = await Connector.findOne({ where: { id } });
 
     if (!record) {
       return res.json({ msg: "Can not find existing record" });
@@ -242,7 +250,7 @@ const readUserCommunities = async (req, res) => {
     const { page = 1, limit = 10, search = "" } = req.query;
     const offset = (page - 1) * limit;
 
-    const { count, rows: communities } = await Community.findAndCountAll({
+    const { count, rows: communities } = await Connector.findAndCountAll({
       where: {
         userId: userId,  // Filter by userId
         title: {
@@ -278,7 +286,7 @@ const readUserCommunities = async (req, res) => {
 module.exports = {
   create,
   readall,
-  countCommunity,
+  countConnector,
   toggleRestrict,
   readRestrictedCommunities,
   readId,
