@@ -163,7 +163,10 @@ const readId = async (req, res) => {
     const { id } = req.params;
     const record = await Connector.findOne({
       where: { id },
-      include: [{ model: Owner, as: "owner" },{ model: User, as: "user" }],
+      include: [
+        { model: Community, as: "community" }
+
+      ],
     });
     return res.json(record);
   } catch (e) {

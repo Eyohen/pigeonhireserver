@@ -155,7 +155,10 @@ const readId = async (req, res) => {
     const { id } = req.params;
     const record = await Community.findOne({
       where: { id },
-      include: [{ model: Owner, as: "owner" },{ model: User, as: "user" }],
+     include: [
+        { model: Connector, as: "connectors" }
+
+      ],
     });
     return res.json(record);
   } catch (e) {
