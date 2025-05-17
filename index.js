@@ -25,7 +25,8 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 const subPurchase = require("./route/subPurchase");
-const review = require("./route/review");
+const communityreview = require("./route/communityreview");
+const connectorreview = require('./route/connectorreview');
 
 const app = express();
 const server = http.createServer(app);
@@ -96,7 +97,9 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/comunities", comunity);
 app.use("/api/communities", community);
 app.use("/api/connectors", connector);
-app.use("/api/reviews", review);
+app.use("/api/communityreviews", communityreview);
+app.use("/api/connectorreviews", connectorreview);
+
 
 app.use((err, req, res, next) => {
     if (err.type === 'StripeSignatureVerificationError') {

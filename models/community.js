@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
           as: 'connectors'
         });
 
+
+        Community.hasMany(models.Review, {
+          foreignKey: 'communityId',
+          as: 'reviews'
+        });
+
       
     }
   }
@@ -181,6 +187,12 @@ module.exports = (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE'
       },
+      rating: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        defaultValue: 5
+      },
+      
     },  
     {
       sequelize,

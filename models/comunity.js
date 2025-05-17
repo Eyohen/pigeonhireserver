@@ -12,25 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
-      //   Comunity.hasMany(models.CollaborationType, {
-      //     foreignKey: 'ComunityId',
-      //     as: 'collaborationTypes'
-      //   });
-
-      // Comunity.belongsTo(models.Owner, {
-      //   foreignKey: 'ownerId',
-      //   as: 'owner',
-      //   targetKey: 'id',
-      //   onDelete: 'CASCADE'
-
-      // });
-      // Comunity.belongsTo(models.User, {
-      //   foreignKey: 'userId',
-      //   as: 'user',
-      //   targetKey: 'id',
-      //   onDelete: 'CASCADE'
-
-      // });
+   
     }
   }
   Comunity.init(

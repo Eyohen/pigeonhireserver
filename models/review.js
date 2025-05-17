@@ -4,11 +4,26 @@ const { Model, UUIDV4 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Review extends Model {
     static associate(models) {
-
-      // Review.belongsTo(models.User, { foreignKey: 'userId', as:'User' });
-      // Review.belongsTo(models.User, { foreignKey: 'reviewerId', as:'Reviewer' });
+      // Association for user being reviewed
+      Review.belongsTo(models.User, { 
+        foreignKey: 'userId', 
+        as: 'User' 
+      });
+      
+      // Association for reviewer
+      Review.belongsTo(models.User, { 
+        foreignKey: 'reviewerId', 
+        as: 'Reviewer' 
+      });
+      
+      // Association for community being reviewed
+      Review.belongsTo(models.Comunity, { 
+        foreignKey: 'communityId', 
+        as: 'Community' 
+      });
     }
   }
+  
   Review.init({
     id: {
       type: DataTypes.UUID,
@@ -28,7 +43,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    // This field refers to the user being reviewed (optional if reviewing a community)
     userId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
+    // This field refers to the community being reviewed (optional if reviewing a user)
+    communityId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'Comunities',
+        key: 'id'
+      }
+    },
+    // This field refers to who created the review
+    reviewerId: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -36,17 +70,16 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    reviewerId: {  // Add this field
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'Users',
-          key: 'id'
-        }
-      }
+    // Type of review - 'user' or 'community'
+    reviewType: {
+      type: DataTypes.ENUM('user', 'community'),
+      allowNull: false,
+      defaultValue: 'user'
+    }
   }, {
     sequelize,
     modelName: 'Review',
   });
+  
   return Review;
 };
