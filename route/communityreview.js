@@ -1,7 +1,7 @@
 // routes/communityReview.js
 const express = require('express');
 const router = express.Router();
-const communityReviewController = require('../controller/communityReview');
+const communityReviewController = require('../controller/communityreview');
 // const authMiddleware = require('../middleware/auth'); // If you have auth middleware
 
 // Public routes - no auth required

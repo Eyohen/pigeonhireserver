@@ -1,7 +1,7 @@
 // routes/connectorReview.js
 const express = require('express');
 const router = express.Router();
-const connectorReviewController = require('../controller/connectorReview');
+const connectorReviewController = require('../controller/connectorreview');
 // const authMiddleware = require('../middleware/auth'); // If you have auth middleware
 
 // Public routes - no auth required
