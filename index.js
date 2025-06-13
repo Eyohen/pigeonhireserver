@@ -7,7 +7,7 @@ const user = require("./route/user");
 const auth = require("./route/auth");
 const owner = require("./route/owner");
 const publicOwner = require("./route/publicOwner");
-const comunity = require("./route/comunity");
+
 const community = require("./route/community");
 const connector = require("./route/connector");
 const goal = require("./route/goal");
@@ -27,6 +27,11 @@ const cors = require("cors");
 const subPurchase = require("./route/subPurchase");
 const communityreview = require("./route/communityreview");
 const connectorreview = require('./route/connectorreview');
+const userFavorites = require("./route/userFavorite"); 
+
+
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -94,11 +99,11 @@ app.use("/api/admin", admin);
 app.use("/api/currencies", currency);
 app.use("/api/subpurchases", subPurchase);
 app.use("/api/chat", chatRoutes);
-app.use("/api/comunities", comunity);
 app.use("/api/communities", community);
 app.use("/api/connectors", connector);
 app.use("/api/communityreviews", communityreview);
 app.use("/api/connectorreviews", connectorreview);
+app.use("/api/favorites", userFavorites); 
 
 
 app.use((err, req, res, next) => {

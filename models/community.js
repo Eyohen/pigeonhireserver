@@ -24,6 +24,13 @@ module.exports = (sequelize, DataTypes) => {
           as: 'reviews'
         });
 
+
+          // Community can be favorited by many users
+      Community.hasMany(models.UserFavorite, {
+        foreignKey: 'communityId',
+        as: 'favoritedBy'
+      });
+
       
     }
   }
