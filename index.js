@@ -28,6 +28,8 @@ const subPurchase = require("./route/subPurchase");
 const communityreview = require("./route/communityreview");
 const connectorreview = require('./route/connectorreview');
 const userFavorites = require("./route/userFavorite"); 
+const subscription = require("./route/subscription");
+const analytics = require("./route/analytics");
 
 
 
@@ -40,6 +42,12 @@ const server = http.createServer(app);
 initializeSocket(server);
 
 const port = process.env.API_PORT;
+
+// IMPORTANT: Stripe webhook endpoint MUST be before express.json() middleware
+app.use("/api/subscriptions/webhook", express.raw({ type: "application/json" }));
+app.use("/api/subpurchases/webhook", express.raw({ type: "application/json" }));
+
+
 app.use("/api/subpurchases/webhook", express.raw({ type: "application/json" }));
 
 app.use(morgan("dev"));
@@ -104,6 +112,8 @@ app.use("/api/connectors", connector);
 app.use("/api/communityreviews", communityreview);
 app.use("/api/connectorreviews", connectorreview);
 app.use("/api/favorites", userFavorites); 
+app.use("/api/subscriptions", subscription);
+app.use("/api/analytics", analytics);
 
 
 app.use((err, req, res, next) => {
