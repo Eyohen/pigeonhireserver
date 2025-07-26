@@ -25,10 +25,7 @@ router.post(
     '/login',
     adminLogin
 );
-// router.post(
-//     '/superadminlogin',
-//     superAdminLogin
-// );
+
 router.get(
     '/refresh',
     refresh

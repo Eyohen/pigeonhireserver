@@ -5,9 +5,6 @@ const { initializeSocket } = require("./controller/chat");
 const chatRoutes = require("./route/chat");
 const user = require("./route/user");
 const auth = require("./route/auth");
-const owner = require("./route/owner");
-const publicOwner = require("./route/publicOwner");
-
 const community = require("./route/community");
 const connector = require("./route/connector");
 const goal = require("./route/goal");
@@ -24,12 +21,12 @@ const currency = require("./route/currency");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
-const subPurchase = require("./route/subPurchase");
 const communityreview = require("./route/communityreview");
 const connectorreview = require('./route/connectorreview');
 const userFavorites = require("./route/userFavorite"); 
 const subscription = require("./route/subscription");
 const analytics = require("./route/analytics");
+const adminAnalytics = require("./route/adminAnalytics");
 
 
 
@@ -45,10 +42,6 @@ const port = process.env.API_PORT;
 
 // IMPORTANT: Stripe webhook endpoint MUST be before express.json() middleware
 app.use("/api/subscriptions/webhook", express.raw({ type: "application/json" }));
-app.use("/api/subpurchases/webhook", express.raw({ type: "application/json" }));
-
-
-app.use("/api/subpurchases/webhook", express.raw({ type: "application/json" }));
 
 app.use(morgan("dev"));
 app.use(helmet());
@@ -92,8 +85,6 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", auth);
 app.use("/api/users", user);
-app.use("/api/owners", owner);
-app.use("/api/publicowners", publicOwner);
 app.use("/api/communitytypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
 app.use("/api/communicationPlatforms", communicationPlatform);
@@ -105,7 +96,6 @@ app.use("/api/test", test);
 app.use("/api/posts", blog);
 app.use("/api/admin", admin);
 app.use("/api/currencies", currency);
-app.use("/api/subpurchases", subPurchase);
 app.use("/api/chat", chatRoutes);
 app.use("/api/communities", community);
 app.use("/api/connectors", connector);
@@ -114,6 +104,7 @@ app.use("/api/connectorreviews", connectorreview);
 app.use("/api/favorites", userFavorites); 
 app.use("/api/subscriptions", subscription);
 app.use("/api/analytics", analytics);
+app.use("/api/admin-analytics", adminAnalytics);
 
 
 app.use((err, req, res, next) => {

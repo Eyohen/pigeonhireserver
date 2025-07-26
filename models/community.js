@@ -287,11 +287,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'networks'
       });
 
-      // Ownership associations
-      Community.belongsTo(models.Owner, {
-        foreignKey: 'ownerId',
-        as: 'owner'
-      });
 
       Community.belongsTo(models.User, {
         foreignKey: 'userId',

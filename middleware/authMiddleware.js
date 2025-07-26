@@ -100,64 +100,6 @@ const requireAdmin = (req, res, next) => {
   }
 };
 
-// Super admin access middleware
-const requireSuperAdmin = (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ 
-        msg: 'Access denied. Authentication required.',
-        error: 'AUTHENTICATION_REQUIRED'
-      });
-    }
-
-    if (req.user.role !== 'superadmin') {
-      return res.status(403).json({ 
-        msg: 'Access denied. Super admin privileges required.',
-        error: 'INSUFFICIENT_PRIVILEGES'
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error('Super admin check error:', error);
-    return res.status(500).json({ 
-      msg: 'Authorization check failed.',
-      error: 'AUTHORIZATION_FAILED'
-    });
-  }
-};
-
-// Check if user owns the resource or is admin
-const requireOwnershipOrAdmin = (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ 
-        msg: 'Access denied. Authentication required.',
-        error: 'AUTHENTICATION_REQUIRED'
-      });
-    }
-
-    const { userId } = req.params;
-    const currentUserId = req.user.id;
-    const userRole = req.user.role;
-
-    // Allow if user is admin/superadmin or owns the resource
-    if (userRole === 'admin' || userRole === 'superadmin' || currentUserId === userId) {
-      next();
-    } else {
-      return res.status(403).json({ 
-        msg: 'Access denied. You can only access your own resources.',
-        error: 'INSUFFICIENT_PRIVILEGES'
-      });
-    }
-  } catch (error) {
-    console.error('Ownership check error:', error);
-    return res.status(500).json({ 
-      msg: 'Authorization check failed.',
-      error: 'AUTHORIZATION_FAILED'
-    });
-  }
-};
 
 // Check subscription status
 const requireSubscription = async (req, res, next) => {
@@ -240,8 +182,6 @@ const optionalAuth = async (req, res, next) => {
 module.exports = {
   verifyToken,
   requireAdmin,
-  requireSuperAdmin,
-  requireOwnershipOrAdmin,
   requireSubscription,
   optionalAuth
 };
