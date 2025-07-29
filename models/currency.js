@@ -1,72 +1,4 @@
-// 'use strict';
-
-
-
-// const { Model, UUIDV4 } = require('sequelize');
-
-
-// module.exports = (sequelize, DataTypes) => {
-//   class Currency extends Model{
-   
-//     /**
-//      * Helper method for defining associations.
-//      * This method is not a part of Sequelize lifecycle.
-//      * The `models/index` file will call this method automatically.
-//      */
-
-
- 
-//     static associate(models) {
-//       // define association here
-//        // Currency can be used in many subscriptions
-//       Currency.hasMany(models.Subscription, {
-//         foreignKey: 'currencyId',
-//         as: 'subscriptions'
-//       });
-
-//     }
-//   }
-//  Currency.init({
-
-//     id: {
-//       type: DataTypes.UUID,
-//       defaultValue: UUIDV4,
-//       allowNull: false,
-//       primaryKey: true,
-//       // autoIncrement: true
-//     },
-//     currency: {
-//             type: DataTypes.STRING,
-//             allowNull: false
-//           },
-//     monthly: {
-//         type: DataTypes.DECIMAL(10,2),
-//         defaultValue: 0,
-//         allowNull: false
-//         },
-
-//     quarterly: {
-//         type: DataTypes.DECIMAL(10,2),
-//         allowNull: false
-//         },
-
-//     annually: {
-//         type: DataTypes.DECIMAL(10,2),
-//         allowNull: false
-//         },
-
-
-//   }, {
-//     sequelize,
-//     modelName: 'Currency',
-//   });
-//   return Currency;
-// };
-
-
-
-
-// models/currency.js - Your existing Currency model (no changes needed)
+// models/currency.js
 'use strict';
 
 const { Model, UUIDV4 } = require('sequelize');
@@ -81,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  
+
   Currency.init({
     id: {
       type: DataTypes.UUID,
@@ -98,17 +30,33 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
       allowNull: false
     },
+    monthlyPriceId: {
+      type: DataTypes.STRING,
+      allowNull: true, // You can make this required later
+      comment: 'Stripe Price ID for monthly plan'
+    },
     quarterly: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false
+    },
+    quarterlyPriceId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Stripe Price ID for quarterly plan'
     },
     annually: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false
     },
+    annuallyPriceId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Stripe Price ID for annually plan'
+    },
   }, {
     sequelize,
     modelName: 'Currency',
   });
+
   return Currency;
 };
