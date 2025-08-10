@@ -1,3 +1,4 @@
+// route/connector.js
 const express = require('express');
 
 const {create, readall, countConnector, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readUserCommunities} = require('../controller/connector')

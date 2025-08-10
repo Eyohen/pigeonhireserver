@@ -1,8 +1,8 @@
+// user.js
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../models');
-// const RequestWithUser = require('../utils/RequestWithUser');
 const { User, Review } = db;
 const {sendVerificationEmail} = require('../utils/nodemailer');
 const crypto = require('crypto');

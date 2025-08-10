@@ -1,5 +1,3 @@
-
-
 // models/profileView.js
 "use strict";
 

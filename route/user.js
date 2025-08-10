@@ -1,3 +1,4 @@
+//route/user.js
 const express = require('express');
 const {create,readId, readall, countUsers,update, deleteId, readSubscribedUsers} = require('../controller/user');
 // const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
