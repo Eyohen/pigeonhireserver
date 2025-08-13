@@ -13,6 +13,7 @@ module.exports = {
     dialectOptions: {
       ssl: false
     },
+    logging: false,
   },
   "test": {
     "username": "root",

@@ -1,289 +1,295 @@
 // user.js
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../models');
+const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("../models");
 const { User, Review } = db;
-const {sendVerificationEmail} = require('../utils/nodemailer');
-const crypto = require('crypto');
-const {sendResetPasswordEmail} = require('../utils/nodemailer')
+const { sendVerificationEmail } = require("../utils/nodemailer");
+const crypto = require("crypto");
+const { sendResetPasswordEmail } = require("../utils/nodemailer");
 const { totalmem } = require("os");
-const { Op } = require('sequelize');
-const { permission } = require('process');
-const { subscribe } = require('diagnostics_channel');
+const { Op } = require("sequelize");
+const { permission } = require("process");
+const { subscribe } = require("diagnostics_channel");
 
+const register = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    console.log("Received data:", req.body);
 
-  const register = async (req, res) => {
-    try {
-      const { firstName, lastName, email, password } = req.body;
-      console.log('Received data:', req.body);
-
-      // Check if user with the given email already exists
-      const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) {
-        return res.status(400).json({ msg: 'Email already exists' });
-      }
-
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      //create verification token
-      const verificationToken = await uuidv4();
-
-      // Create the user record with hashed password
-      const record = await User.create({ ...req.body, email, password: hashedPassword, verificationToken }).catch(err => {
-        console.log('Database error:', err);
-        throw err;
-      });
-
-      //send verification email
-      sendVerificationEmail(email, verificationToken);
-
-
-      return res.status(200).json({ record, msg: "User successfully created" });
-    } catch (error) {
-      console.log("Registration error", error);
-      return res.status(500).json({ msg: "Failed to register user", error });
+    // Check if user with the given email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ msg: "Email already exists" });
     }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    //create verification token
+    const verificationToken = await uuidv4();
+
+    // Create the user record with hashed password
+    const record = await User.create({
+      ...req.body,
+      email,
+      password: hashedPassword,
+      verificationToken,
+    }).catch((err) => {
+      console.log("Database error:", err);
+      throw err;
+    });
+
+    //send verification email
+    sendVerificationEmail(email, verificationToken);
+
+    return res.status(200).json({ record, msg: "User successfully created" });
+  } catch (error) {
+    console.log("Registration error", error);
+    return res.status(500).json({ msg: "Failed to register user", error });
+  }
+};
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    console.log("toeiehe", token);
+
+    //find the user with the provided token
+    const user = await User.findOne({ where: { verificationToken: token } });
+    console.log({ user });
+
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid or expired token" });
+    }
+
+    // verify the user
+    await user.update({ verified: true, verificationToken: null });
+    // user.verified = true;
+    // user.verificationToken = null;
+    await user.save();
+
+    return res.status(200).json({ msg: "Email successfully verified" });
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    return res.status(500).json({ msg: "Failed to verify email", error });
+  }
+};
+
+// creating users from the dashboard
+const create = async (req, res) => {
+  try {
+    // create menu record in the database
+    const record = await User.create({ ...req.body });
+    return res
+      .status(200)
+      .json({ record, msg: "Successfully created Community Owner" });
+  } catch (error) {
+    console.log("henry", error);
+    return res.status(500).json({ msg: "fail to create", error });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, subscribed } = req.body;
+
+    // Check if user with the given email exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // check if users email is verified
+    if (!user.verified) {
+      return res
+        .status(401)
+        .json({ msg: "Please verify your email to log in" });
+    }
+
+    // Compare the provided password with the hashed password in the database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ msg: "Invalid credentials" });
+    }
+
+    const userPayload = {
+      id: user.id,
+      email: user.email,
+      fname: user.firstName,
+      lname: user.lastName,
+      role: user.role,
+      currency: user.currency,
+      subscribed: user.subscribed,
+    };
+
+    // Generate JWT token with user object
+    const accessToken = jwt.sign(
+      { user: userPayload },
+      process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
+      { expiresIn: "14d" } // Token expiration time
+    );
+
+    // Generate Refresh Token
+    const refreshToken = jwt.sign(
+      { user: userPayload },
+      process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
+      { expiresIn: "14d" } // Refresh token expiration time
+    );
+
+    return res
+      .status(200)
+      .json({ accessToken, refreshToken, user: userPayload });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    return res.status(500).json({ msg: "Failed to log in", error });
+  }
+};
+
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user with the given email exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Check if user's role is admin or superadmin
+    if (user.role !== "admin" && user.role !== "superadmin") {
+      return res
+        .status(401)
+        .json({ msg: "Unauthorized access: Only admins are allowed" });
+    }
+
+    // Compare the provided password with the hashed password in the database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ msg: "Invalid credentials" });
+    }
+
+    const userPayload = {
+      id: user.id,
+      email: user.email,
+      fname: user.firstName,
+      lname: user.lastName,
+      role: user.role,
+      currency: user.currency,
+    };
+
+    // Generate JWT token
+    const accessToken = jwt.sign(
+      { user: userPayload },
+      // { userId: user.id, email: user.email },
+      process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
+      { expiresIn: "14d" } // Token expiration time
+    );
+
+    // Generate Refresh Token
+    const refreshToken = jwt.sign(
+      { user: userPayload },
+      process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
+      { expiresIn: "14d" } // Refresh token expiration time
+    );
+
+    return res
+      .status(200)
+      .json({ accessToken, refreshToken, user: userPayload });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    return res.status(500).json({ msg: "Failed to log in", error });
+  }
+};
+
+const superAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user with the given email exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Check if user's role is admin or superadmin
+    if (user.role !== "superadmin") {
+      return res
+        .status(401)
+        .json({ msg: "Unauthorized access: Only superadmins are allowed" });
+    }
+
+    // Compare the provided password with the hashed password in the database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ msg: "Invalid credentials" });
+    }
+
+    const userPayload = {
+      id: user.id,
+      email: user.email,
+      fname: user.firstName,
+      lname: user.lastName,
+      role: user.role,
+    };
+
+    // Generate JWT token
+    const accessToken = jwt.sign(
+      { user: userPayload },
+      // { userId: user.id, email: user.email },
+      process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
+      { expiresIn: "14d" } // Token expiration time
+    );
+
+    // Generate Refresh Token
+    const refreshToken = jwt.sign(
+      { user: userPayload },
+      process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
+      { expiresIn: "14d" } // Refresh token expiration time
+    );
+
+    return res
+      .status(200)
+      .json({ accessToken, refreshToken, user: userPayload });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    return res.status(500).json({ msg: "Failed to log in", error });
+  }
+};
+
+const refresh = async (req, res) => {
+  const token = req.headers?.authorization?.split(" ")[1];
+
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized - Missing token" });
+    return;
   }
 
-
-  const verifyEmail= async (req, res) => {
-    try {
-      const {token} = req.query;
-
-      console.log('toeiehe', token)
-
-      //find the user with the provided token
-      const user = await User.findOne({where: {verificationToken: token}});
-      console.log({user})
-
-      if(!user) {
-        return res.status(400).json({msg: 'Invalid or expired token'});
-      }
-
-      // verify the user 
-      await user.update({verified : true, verificationToken : null});
-      // user.verified = true;
-      // user.verificationToken = null;
-      await user.save();
-
-      return res.status(200).json({msg: 'Email successfully verified'})
-
-    } catch (error) {
-      console.error('Error verifying email:', error);
-      return res.status(500).json({ msg: 'Failed to verify email', error });
-    }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({ ...decoded, access_token: token });
+  } catch (err) {
+    res.status(401).json({ error: "Unauthorized - Invalid token" });
   }
-
-
-  // creating users from the dashboard
-  const create = async (req, res) => {
-		try {
-		
-			// create menu record in the database
-			const record = await User.create({ ...req.body});
-			return res.status(200).json({ record, msg: "Successfully created Community Owner" });
-		} catch (error) {
-			console.log("henry", error);
-			return res.status(500).json({ msg: "fail to create", error });
-		}
-	}
-
-
-
-  const login = async (req, res) => {
-    try {
-      const { firstName, lastName, email, password, subscribed } = req.body;
-
-      // Check if user with the given email exists
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-
-      // check if users email is verified
-      if(!user.verified){
-        return res.status(401).json({msg: "Please verify your email to log in"});
-      }
-
-      // Compare the provided password with the hashed password in the database
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ msg: 'Invalid credentials' });
-      }
-
-      const userPayload = {
-        id: user.id,
-        email: user.email,
-        fname: user.firstName,
-        lname: user.lastName,
-        role: user.role,
-        currency:user.currency,
-        subscribed:user.subscribed
-      };
-
-      // Generate JWT token with user object
-      const accessToken = jwt.sign(
-        { user: userPayload },
-        process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
-        { expiresIn: '14d' } // Token expiration time
-      );
-
-      // Generate Refresh Token
-      const refreshToken = jwt.sign(
-        { user: userPayload },
-        process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
-        { expiresIn: '14d' } // Refresh token expiration time
-      );
-
-      return res.status(200).json({ accessToken, refreshToken, user: userPayload });
-    } catch (error) {
-      console.error('Error logging in:', error);
-      return res.status(500).json({ msg: 'Failed to log in', error });
-    }
-  }
-
-  const adminLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-
-      // Check if user with the given email exists
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-
-      // Check if user's role is admin or superadmin
-      if (user.role !== 'admin' && user.role !== 'superadmin') {
-        return res.status(401).json({ msg: 'Unauthorized access: Only admins are allowed' });
-      }
-
-      // Compare the provided password with the hashed password in the database
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ msg: 'Invalid credentials' });
-      }
-
-      const userPayload = {
-        id: user.id,
-        email: user.email,
-        fname: user.firstName,
-        lname: user.lastName,
-        role: user.role,
-        currency:user.currency
-      };
-
-
-      // Generate JWT token
-      const accessToken = jwt.sign(
-        {user: userPayload},
-        // { userId: user.id, email: user.email },
-        process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
-        { expiresIn: '14d' } // Token expiration time
-      );
-
-            // Generate Refresh Token
-            const refreshToken = jwt.sign(
-              { user: userPayload },
-              process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
-              { expiresIn: '14d' } // Refresh token expiration time
-            );
-      
-
-      return res.status(200).json({ accessToken, refreshToken, user:userPayload });
-    } catch (error) {
-      console.error('Error logging in:', error);
-      return res.status(500).json({ msg: 'Failed to log in', error });
-    }
-  }
-
-  const superAdminLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-
-      // Check if user with the given email exists
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-
-      // Check if user's role is admin or superadmin
-      if (user.role !== 'superadmin' ) {
-        return res.status(401).json({ msg: 'Unauthorized access: Only superadmins are allowed' });
-      }
-
-      // Compare the provided password with the hashed password in the database
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ msg: 'Invalid credentials' });
-      }
-
-      const userPayload = {
-        id: user.id,
-        email: user.email,
-        fname: user.firstName,
-        lname: user.lastName,
-        role: user.role
-      };
-
-
-      // Generate JWT token
-      const accessToken = jwt.sign(
-        {user: userPayload},
-        // { userId: user.id, email: user.email },
-        process.env.JWT_SECRET, // Use a secure secret key, preferably from environment variables
-        { expiresIn: '14d' } // Token expiration time
-      );
-
-            // Generate Refresh Token
-            const refreshToken = jwt.sign(
-              { user: userPayload },
-              process.env.JWT_REFRESH_SECRET, // Use a secure refresh secret key
-              { expiresIn: '14d' } // Refresh token expiration time
-            );
-      
-
-      return res.status(200).json({ accessToken, refreshToken, user:userPayload });
-    } catch (error) {
-      console.error('Error logging in:', error);
-      return res.status(500).json({ msg: 'Failed to log in', error });
-    }
-  }
-
-  const refresh = async (req, res) => {
-    const token = req.headers?.authorization?.split(' ')[1];
-
-    if (!token) {
-      res.status(401).json({ error: "Unauthorized - Missing token" });
-      return;
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      res.status(200).json({ ...decoded, access_token: token });
-    } catch (err) {
-      res.status(401).json({ error: "Unauthorized - Invalid token" });
-    }
-  }
+};
 
 const forgotPassword = async (req, res) => {
-  try{
-    const {email} = req.body;
+  try {
+    const { email } = req.body;
 
     // check if user with the given email exists
-    const user = await User.findOne({where:{email}});
+    const user = await User.findOne({ where: { email } });
 
-    if(!user){
-      return res.status(404).json({msg:'User not found'});
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
     // generate a 4-digit otp
-    const otp = crypto.randomInt(1000, 9999).toString().padStart(4, '0');
+    const otp = crypto.randomInt(1000, 9999).toString().padStart(4, "0");
 
     // generate a unique token
-    const resetToken = crypto.randomBytes(20).toString('hex');
-
+    const resetToken = crypto.randomBytes(20).toString("hex");
 
     //save the OTP, token  and its expiration time in the user record
     user.resetPasswordOTP = otp;
@@ -291,78 +297,78 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // otp expires in 10 minutes
     await user.save();
 
-
     // send email with OTP
     await sendResetPasswordEmail(email, otp, resetToken);
 
-    return res.status(200).json({msg:'Password reset OTP sent to your email', resetToken});
-
+    return res
+      .status(200)
+      .json({ msg: "Password reset OTP sent to your email", resetToken });
   } catch (error) {
-    console.error('Error in forgot password:', error);
-    return res.status(500).json({msg:"Failed to process forgot password request", error});
+    console.error("Error in forgot password:", error);
+    return res
+      .status(500)
+      .json({ msg: "Failed to process forgot password request", error });
   }
 };
 
-
 const verifyOTP = async (req, res) => {
-  try{
-    const {otp} = req.body;
-    const resetToken = req.headers['x-reset-token']; //  get the reset token from headers
+  try {
+    const { otp } = req.body;
+    const resetToken = req.headers["x-reset-token"]; //  get the reset token from headers
 
-    if (!otp){
-      return res.status(400).json({msg:'OTP is required'});
+    if (!otp) {
+      return res.status(400).json({ msg: "OTP is required" });
     }
 
-    if(!resetToken) {
-      return res.status(400).json({msg:'Reset token is required'});
+    if (!resetToken) {
+      return res.status(400).json({ msg: "Reset token is required" });
     }
 
     // find user by reset token
     const user = await User.findOne({
-      where:{
+      where: {
         resetPasswordToken: resetToken,
-        resetPasswordExpires: {[Op.gt]: Date.now()} // check if token is expired
-        }
+        resetPasswordExpires: { [Op.gt]: Date.now() }, // check if token is expired
+      },
     });
 
-    if(!user){
-      return res.status(404).json({msg:'Invalid or expired reset token'});
+    if (!user) {
+      return res.status(404).json({ msg: "Invalid or expired reset token" });
     }
 
     //check if OTP is valid
-    if(user.resetPasswordOTP !== otp){
-      return res.status(400).json({msg:'Invalid OTP'});
+    if (user.resetPasswordOTP !== otp) {
+      return res.status(400).json({ msg: "Invalid OTP" });
     }
 
-
     //OTP is valid
-    return res.status(200).json({msg:'OTP verified successfully'});
-  } catch(error){
-console.error('Error in OTP verification:', error);
-return res.status(500).json({msg:"Failed to verify OTP", error})
+    return res.status(200).json({ msg: "OTP verified successfully" });
+  } catch (error) {
+    console.error("Error in OTP verification:", error);
+    return res.status(500).json({ msg: "Failed to verify OTP", error });
   }
-}
+};
 
 const resetPassword = async (req, res) => {
-  try{
-    const {newPassword} = req.body;
-    const resetToken = req.headers['x-reset-token'];
+  try {
+    const { newPassword } = req.body;
+    const resetToken = req.headers["x-reset-token"];
 
-    if(!resetToken){
-      return res.status(400).json({msg:'Reset token is required'});
+    if (!resetToken) {
+      return res.status(400).json({ msg: "Reset token is required" });
     }
 
     // find user by reset token
-    const user = await User.findOne({where:{
-      resetPasswordToken:resetToken,
-      resetPasswordExpires: {[Op.gt]:Date.now()} //check if token is not expired
-    }});
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: { [Op.gt]: Date.now() }, //check if token is not expired
+      },
+    });
 
-
-    if(!user){
-      return res.status(404).json({msg: 'Invalid reset token'});
+    if (!user) {
+      return res.status(404).json({ msg: "Invalid reset token" });
     }
-
 
     // hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -374,220 +380,528 @@ const resetPassword = async (req, res) => {
     user.resetPasswordExpires = null;
     await user.save();
 
-    return res.status(200).json({msg:'Password reset successful'});
-
+    return res.status(200).json({ msg: "Password reset successful" });
   } catch (error) {
-    console.error('Error in reset password:', error);
-    return res.status(500).json({msg:'Failed to reset password', error})
+    console.error("Error in reset password:", error);
+    return res.status(500).json({ msg: "Failed to reset password", error });
   }
-}
+};
 
-  const profile = async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ msg: 'Unauthorized' });
-      }
-
-      const userId = req.user.id;
-      const user = await User.findByPk(userId);
-
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return res.status(500).json({ msg: 'Internal server error' });
+const profile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ msg: "Unauthorized" });
     }
+
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({ msg: "Internal server error" });
   }
+};
 
+const readall = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const offset = (page - 1) * limit;
 
-  const readall = async (req, res) => {
-		try {
-			const { page = 1, limit = 10, search = ''} = req.query;
-			const offset = (page - 1) * limit;
-
-			const {count, rows: users} = await User.findAndCountAll({
-				where: {
-					firstName:{
-						[Op.iLike]: `%${search}%`
-					},
-
-				},
-				limit: parseInt(limit),
-				offset:parseInt(offset),
-        include: [{
+    const { count, rows: users } = await User.findAndCountAll({
+      where: {
+        firstName: {
+          [Op.iLike]: `%${search}%`,
+        },
+      },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        {
           model: Review,
           // Don't need 'as' since we didn't specify an alias in the association
-          attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
-          include: [{
+          attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+          include: [
+            {
               model: User,
-              as: 'Reviewer',
-              attributes: ['firstName', 'lastName']
-          }]
-      }],
-			});
-			return res.json({
-				users,
-				totalPages:Math.ceil(count / limit),
-				currentPage: parseInt(page)
-			});
-		} catch (e) {
-			return res.json({ msg: "fail to read", status: 500, route: "/read" });
-		}
-	}
+              as: "Reviewer",
+              attributes: ["firstName", "lastName"],
+            },
+          ],
+        },
+      ],
+    });
+    return res.json({
+      users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+    });
+  } catch (e) {
+    return res.json({ msg: "fail to read", status: 500, route: "/read" });
+  }
+};
 
-  const readId = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const record = await User.findOne({ where: { id },
-        include: [{
+const readId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await User.findOne({
+      where: { id },
+      include: [
+        {
           model: Review,
-          attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
-          include: [{
+          attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+          include: [
+            {
               model: User,
-              as: 'Reviewer',
-              attributes: ['firstName', 'lastName']
-          }]
-      }]
-      });
-      return res.json(record);
-    } catch (e) {
-      return res.json({ msg: "Failed to read", status: 500, route: "/read/:id" });
-    }
+              as: "Reviewer",
+              attributes: ["firstName", "lastName"],
+            },
+          ],
+        },
+      ],
+    });
+    return res.json(record);
+  } catch (e) {
+    return res.json({ msg: "Failed to read", status: 500, route: "/read/:id" });
   }
+};
 
-  
-	const countUsers = async (req, res) => {
-		try {
-			const { search = '' } = req.query;
-	
-			const count = await User.count({
-				where: {
-					firstName: {
-						[Op.iLike]: `%${search}%`
-					},
+const countUsers = async (req, res) => {
+  try {
+    const { search = "" } = req.query;
 
-				}
-			});
-	
-			return res.json({
-				count: count,
-				status: 200
-			});
-		} catch (e) {
-			console.error("Error counting communities:", e);
-			return res.status(500).json({ 
-				msg: "Failed to count communities", 
-				status: 500, 
-				route: "/count" 
-			});
-		}
-	};
+    const count = await User.count({
+      where: {
+        firstName: {
+          [Op.iLike]: `%${search}%`,
+        },
+      },
+    });
 
-  const update = async (req, res) =>{
-    try {
-      const updated = await User.update({ ...req.body }, { where: { id: req.params.id } });
-      if (updated) {
-        const updatedUser = await User.findByPk(req.params.id);
-        res.status(200).json(updatedUser);
-      } else {
-        res.status(404).json({ message: 'User not found' });
-      }
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating the User', error });
-    }
+    return res.json({
+      count: count,
+      status: 200,
+    });
+  } catch (e) {
+    console.error("Error counting communities:", e);
+    return res.status(500).json({
+      msg: "Failed to count communities",
+      status: 500,
+      route: "/count",
+    });
   }
+};
 
-  const deleteId = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const record = await User.findOne({ where: { id } });
-
-      if (!record) {
-        return res.json({ msg: "Cannot find existing record" });
-      }
-
-      const deletedRecord = await record.destroy();
-      return res.json({ record: deletedRecord });
-    } catch (e) {
-      return res.json({
-        msg: "Failed to read",
-        status: 500,
-        route: "/delete/:id",
-      });
+const update = async (req, res) => {
+  try {
+    const updated = await User.update(
+      { ...req.body },
+      { where: { id: req.params.id } }
+    );
+    if (updated) {
+      const updatedUser = await User.findByPk(req.params.id);
+      res.status(200).json(updatedUser);
+    } else {
+      res.status(404).json({ message: "User not found" });
     }
+  } catch (error) {
+    res.status(500).json({ message: "Error updating the User", error });
   }
+};
 
+const deleteId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await User.findOne({ where: { id } });
 
-  const readSubscribedUsers = async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
-  
-      // Find the user to check their subscription status
-      const currentUser = await User.findByPk(userId);
-      
-      if (!currentUser) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-  
-      let users;
-      let count;
-  
-      if (currentUser.subscribed) {
-        // If user is subscribed, return all users
-        const result = await User.findAndCountAll({
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          include: [{
+    if (!record) {
+      return res.json({ msg: "Cannot find existing record" });
+    }
+
+    const deletedRecord = await record.destroy();
+    return res.json({ record: deletedRecord });
+  } catch (e) {
+    return res.json({
+      msg: "Failed to read",
+      status: 500,
+      route: "/delete/:id",
+    });
+  }
+};
+
+const readSubscribedUsers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Find the user to check their subscription status
+    const currentUser = await User.findByPk(userId);
+
+    if (!currentUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    let users;
+    let count;
+
+    if (currentUser.subscribed) {
+      // If user is subscribed, return all users
+      const result = await User.findAndCountAll({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        include: [
+          {
             model: Review,
-            attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
-            include: [{
-              model: User,
-              as: 'Reviewer',
-              attributes: ['firstName', 'lastName']
-            }]
-          }]
-        });
-        
-        users = result.rows;
-        count = result.count;
-      } else {
-        // If user is not subscribed, return only 3 users
-        const result = await User.findAndCountAll({
-          limit: 10,
-          include: [{
-            model: Review,
-            attributes: ['id', 'rating', 'comment', 'createdAt', 'reviewerId'],
-            include: [{
-              model: User,
-              as: 'Reviewer',
-              attributes: ['firstName', 'lastName']
-            }]
-          }]
-        });
-        
-        users = result.rows;
-        count = result.count;
-      }
-  
-      return res.json({
-        users,
-        totalPages: Math.ceil(count / limit),
-        currentPage: parseInt(page)
+            attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+            include: [
+              {
+                model: User,
+                as: "Reviewer",
+                attributes: ["firstName", "lastName"],
+              },
+            ],
+          },
+        ],
       });
-    } catch (e) {
-      console.error('Error fetching users:', e);
-      return res.status(500).json({ 
-        msg: "Failed to fetch users", 
-        status: 500 
+
+      users = result.rows;
+      count = result.count;
+    } else {
+      // If user is not subscribed, return only 3 users
+      const result = await User.findAndCountAll({
+        limit: 10,
+        include: [
+          {
+            model: Review,
+            attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+            include: [
+              {
+                model: User,
+                as: "Reviewer",
+                attributes: ["firstName", "lastName"],
+              },
+            ],
+          },
+        ],
+      });
+
+      users = result.rows;
+      count = result.count;
+    }
+
+    return res.json({
+      users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+    });
+  } catch (e) {
+    console.error("Error fetching users:", e);
+    return res.status(500).json({
+      msg: "Failed to fetch users",
+      status: 500,
+    });
+  }
+};
+
+// Enhanced user profile update
+const updateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dateOfBirth,
+      gender,
+      bio,
+      location,
+      website,
+      linkedIn,
+      twitter,
+      instagram,
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    // Check if user exists
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prepare update object with only the fields that should be updated
+    const updateData = {};
+
+    // Basic profile fields
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth;
+    if (gender !== undefined) updateData.gender = gender;
+    if (bio !== undefined) updateData.bio = bio;
+    if (location !== undefined) updateData.location = location;
+    if (website !== undefined) updateData.website = website;
+    if (linkedIn !== undefined) updateData.linkedIn = linkedIn;
+    if (twitter !== undefined) updateData.twitter = twitter;
+    if (instagram !== undefined) updateData.instagram = instagram;
+
+    // Handle email update (check for uniqueness)
+    if (email !== undefined && email !== user.email) {
+      const existingUser = await User.findOne({
+        where: {
+          email,
+          id: { [Op.ne]: id }, // Exclude current user
+        },
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Email already exists",
+          field: "email",
+        });
+      }
+      updateData.email = email;
+    }
+
+    // Handle password update
+    if (currentPassword && newPassword) {
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({
+          message: "Current password is incorrect",
+          field: "currentPassword",
+        });
+      }
+
+      // Validate new password strength (optional)
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          message: "New password must be at least 6 characters long",
+          field: "newPassword",
+        });
+      }
+
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      updateData.password = hashedNewPassword;
+    }
+
+    // Update user
+    const [updated] = await User.update(updateData, {
+      where: { id },
+    });
+
+    if (updated) {
+      // Fetch updated user (exclude password)
+      const updatedUser = await User.findByPk(id, {
+        attributes: {
+          exclude: [
+            "password",
+            "resetPasswordOTP",
+            "resetPasswordToken",
+            "resetPasswordExpires",
+          ],
+        },
+      });
+
+      return res.status(200).json({
+        message: "Profile updated successfully",
+        user: updatedUser,
+      });
+    } else {
+      return res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res.status(500).json({
+      message: "Error updating profile",
+      error: error.message,
+    });
+  }
+};
+
+// Get user profile (enhanced with more details)
+const getProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
+
+    const userId = req.user.id;
+    const user = await User.findByPk(userId, {
+      attributes: {
+        exclude: [
+          "password",
+          "resetPasswordOTP",
+          "resetPasswordToken",
+          "resetPasswordExpires",
+        ],
+      },
+      include: [
+        {
+          model: Review,
+          attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+          include: [
+            {
+              model: User,
+              as: "Reviewer",
+              attributes: ["firstName", "lastName"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+};
+
+// Upload profile image (if you want to add this functionality)
+const uploadProfileImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body; // Assuming you're using cloudinary
+
+    if (!imageUrl) {
+      return res.status(400).json({ message: "Image URL is required" });
+    }
+
+    const [updated] = await User.update(
+      { profileImage: imageUrl },
+      { where: { id } }
+    );
+
+    if (updated) {
+      const updatedUser = await User.findByPk(id, {
+        attributes: {
+          exclude: [
+            "password",
+            "resetPasswordOTP",
+            "resetPasswordToken",
+            "resetPasswordExpires",
+          ],
+        },
+      });
+
+      return res.status(200).json({
+        message: "Profile image updated successfully",
+        user: updatedUser,
+      });
+    } else {
+      return res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error uploading profile image:", error);
+    return res.status(500).json({
+      message: "Error uploading profile image",
+      error: error.message,
+    });
+  }
+};
+
+// Change password only
+const changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate required fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "All password fields are required",
       });
     }
-  };
 
+    // Check if new passwords match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "New passwords do not match",
+        field: "confirmPassword",
+      });
+    }
 
+    // Validate new password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters long",
+        field: "newPassword",
+      });
+    }
 
-module.exports = {register, create, login, adminLogin, superAdminLogin, refresh, readId, readall, countUsers, update, deleteId, verifyEmail, forgotPassword, resetPassword, verifyOTP, readSubscribedUsers};
+    // Find user
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+        field: "currentPassword",
+      });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await User.update({ password: hashedNewPassword }, { where: { id } });
+
+    return res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return res.status(500).json({
+      message: "Error changing password",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  register,
+  create,
+  login,
+  adminLogin,
+  superAdminLogin,
+  refresh,
+  readId,
+  readall,
+  countUsers,
+  update,
+  deleteId,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
+  verifyOTP,
+  readSubscribedUsers,
+
+  // New enhanced profile functions
+  updateProfile,
+  getProfile: profile, // Use existing profile function or replace with getProfile
+  uploadProfileImage,
+  changePassword,
+};
