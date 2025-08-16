@@ -79,8 +79,7 @@
 
 
 
-
-// models/userFavorite.js - Safe migration version
+// models/userFavorite.js - Fixed version with proper nullable fields
 'use strict';
 
 const { Model, UUIDV4 } = require('sequelize');
@@ -126,7 +125,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     communityId: {
       type: DataTypes.UUID,
-      allowNull: true, // Made nullable since we can have either community or connector
+      allowNull: true, // IMPORTANT: Must be nullable
       references: {
         model: 'Communities',
         key: 'id'
@@ -135,7 +134,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     connectorId: {
       type: DataTypes.UUID,
-      allowNull: true, // Made nullable since we can have either community or connector
+      allowNull: true, // IMPORTANT: Must be nullable
       references: {
         model: 'Connectors',
         key: 'id'
@@ -145,7 +144,7 @@ module.exports = (sequelize, DataTypes) => {
     favoriteType: {
       type: DataTypes.ENUM('community', 'connector'),
       allowNull: false,
-      defaultValue: 'community' // Add default value to help with migration
+      defaultValue: 'community'
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -161,8 +160,6 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'UserFavorite',
     tableName: 'UserFavorites',
-    // Remove the complex indexes for now - we'll add them manually via SQL
-    // The unique constraints will be handled by the SQL migration above
     validate: {
       eitherCommunityOrConnector() {
         if (!this.communityId && !this.connectorId) {
