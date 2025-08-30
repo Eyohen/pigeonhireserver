@@ -1,6 +1,531 @@
+//controller/subscription.js
 const db = require('../models');
 const { Subscription, User, Currency } = db;
 const { Op } = require('sequelize');
+
+
+// Enhanced Stripe webhook handler with proper event processing
+const handleStripeWebhook = async (req, res) => {
+  let event;
+
+  try {
+    // In production, you should verify the webhook signature
+    // const signature = req.headers['stripe-signature'];
+    // event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    
+    // For now, we'll process the raw event
+    event = req.body;
+    
+    console.log(`Received webhook event: ${event.type}`);
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object);
+        break;
+
+      case 'customer.subscription.created':
+        await handleSubscriptionCreated(event.data.object);
+        break;
+
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object);
+        break;
+
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(event.data.object);
+        break;
+
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data.object);
+        break;
+
+      case 'payment_intent.succeeded':
+        await handlePaymentIntentSucceeded(event.data.object);
+        break;
+
+      case 'payment_intent.payment_failed':
+        await handlePaymentIntentFailed(event.data.object);
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(400).json({ error: 'Webhook handling failed', details: error.message });
+  }
+};
+
+// Handle successful checkout session (main subscription creation)
+const handleCheckoutSessionCompleted = async (session) => {
+  try {
+    console.log('Processing checkout.session.completed:', session.id);
+
+    const {
+      customer,
+      subscription: stripeSubscriptionId,
+      metadata,
+      amount_total,
+      currency: sessionCurrency,
+      payment_intent,
+      mode,
+      customer_details
+    } = session;
+
+    // Extract metadata passed from frontend
+    const {
+      userId,
+      currencyId,
+      planType,
+      priceId,
+      userEmail,
+      userName
+    } = metadata || {};
+
+    if (!userId || !currencyId || !planType) {
+      throw new Error('Missing required metadata: userId, currencyId, planType required');
+    }
+
+    // Validate UUID formats
+    if (!isValidUUID(userId) || !isValidUUID(currencyId)) {
+      throw new Error('Invalid UUID format for userId or currencyId');
+    }
+
+    // Check if subscription already exists
+    const existingSubscription = await Subscription.findOne({
+      where: { 
+        [Op.or]: [
+          { stripeSubscriptionId },
+          { stripePaymentIntentId: payment_intent }
+        ]
+      }
+    });
+
+    if (existingSubscription) {
+      console.log(`Subscription already exists for Stripe ID: ${stripeSubscriptionId}`);
+      return;
+    }
+
+    // Get currency details and validate priceId
+    const currencyRecord = await Currency.findByPk(currencyId);
+    if (!currencyRecord) {
+      throw new Error(`Currency not found: ${currencyId}`);
+    }
+
+    // Validate priceId matches the plan type and currency
+    let expectedPriceId, subscriptionAmount;
+    switch (planType) {
+      case 'monthly':
+        expectedPriceId = currencyRecord.monthlyPriceId;
+        subscriptionAmount = parseFloat(currencyRecord.monthly);
+        break;
+      case 'quarterly':
+        expectedPriceId = currencyRecord.quarterlyPriceId;
+        subscriptionAmount = parseFloat(currencyRecord.quarterly);
+        break;
+      case 'annually':
+        expectedPriceId = currencyRecord.annuallyPriceId;
+        subscriptionAmount = parseFloat(currencyRecord.annually);
+        break;
+      default:
+        throw new Error(`Invalid plan type: ${planType}`);
+    }
+
+    // Verify priceId if provided
+    if (priceId && expectedPriceId && priceId !== expectedPriceId) {
+      console.warn(`Price ID mismatch: expected ${expectedPriceId}, got ${priceId}`);
+    }
+
+    // Calculate dates
+    const startDate = new Date();
+    const endDate = calculateEndDate(startDate, planType);
+    const nextPaymentDate = calculateNextPaymentDate(startDate, planType);
+
+    // Prepare comprehensive metadata
+    const subscriptionMetadata = {
+      // Stripe-related data
+      stripeSessionId: session.id,
+      stripePaymentIntentId: payment_intent,
+      stripePriceId: priceId || expectedPriceId,
+      stripeMode: mode,
+      
+      // Payment details
+      originalAmount: amount_total ? (amount_total / 100) : subscriptionAmount, // Stripe amounts are in cents
+      stripeCurrency: sessionCurrency,
+      paymentStatus: 'completed',
+      
+      // User context
+      userEmail: userEmail || customer_details?.email,
+      userName: userName || customer_details?.name,
+      customerIP: customer_details?.address?.country,
+      
+      // Plan details
+      originalPlanType: planType,
+      currencyId: currencyId,
+      priceValidated: priceId === expectedPriceId,
+      
+      // Webhook processing info
+      createdFromWebhook: true,
+      webhookProcessedAt: new Date().toISOString(),
+      webhookEventType: 'checkout.session.completed',
+      
+      // System metadata
+      apiVersion: '2024-08-30',
+      processingVersion: '1.0.0'
+    };
+
+    // Create subscription record with all required fields
+    const subscription = await Subscription.create({
+      // Core identifiers
+      userId: userId, // Already UUID from frontend
+      currencyId: currencyId, // Already UUID from frontend
+      
+      // Stripe integration fields
+      stripeCustomerId: customer,
+      stripeSubscriptionId: stripeSubscriptionId,
+      stripePaymentIntentId: payment_intent,
+      
+      // Plan and pricing
+      planType: planType,
+      amount: subscriptionAmount,
+      currency: currencyRecord.currency,
+      
+      // Status and dates
+      status: 'active',
+      startDate: startDate,
+      endDate: endDate,
+      autoRenew: true,
+      
+      // Payment tracking
+      paymentMethod: 'card', // Default for Stripe checkout
+      lastPaymentDate: startDate,
+      nextPaymentDate: nextPaymentDate,
+      
+      // Rich metadata
+      metadata: subscriptionMetadata
+    });
+
+    // Update user subscription status
+    await User.update(
+      { subscribed: true },
+      { where: { id: userId } }
+    );
+
+    console.log(`Subscription created successfully: ${subscription.id}`, {
+      userId,
+      planType,
+      amount: subscriptionAmount,
+      currency: currencyRecord.currency,
+      stripeSubscriptionId
+    });
+
+  } catch (error) {
+    console.error('Error handling checkout session completed:', error);
+    // Log structured error for debugging
+    console.error('Session data:', {
+      sessionId: session?.id,
+      customer: session?.customer,
+      metadata: session?.metadata,
+      amount_total: session?.amount_total
+    });
+    throw error;
+  }
+};
+
+// Helper function to validate UUID format
+const isValidUUID = (uuid) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+// Handle subscription creation (backup handler)
+const handleSubscriptionCreated = async (subscription) => {
+  try {
+    console.log('Processing customer.subscription.created:', subscription.id);
+
+    // Update existing subscription record if found
+    const existingSubscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: subscription.id }
+    });
+
+    if (existingSubscription && existingSubscription.status !== 'active') {
+      await existingSubscription.update({
+        status: 'active',
+        metadata: {
+          ...existingSubscription.metadata,
+          stripeStatus: subscription.status,
+          activatedAt: new Date().toISOString()
+        }
+      });
+
+      console.log(`Subscription activated: ${existingSubscription.id}`);
+    }
+
+  } catch (error) {
+    console.error('Error handling subscription created:', error);
+    throw error;
+  }
+};
+
+// Handle subscription updates
+const handleSubscriptionUpdated = async (subscription) => {
+  try {
+    console.log('Processing customer.subscription.updated:', subscription.id);
+
+    const existingSubscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: subscription.id },
+      include: [{ model: User, as: 'user' }]
+    });
+
+    if (!existingSubscription) {
+      console.log(`No subscription found for Stripe ID: ${subscription.id}`);
+      return;
+    }
+
+    // Map Stripe status to our status
+    let newStatus = existingSubscription.status;
+    let shouldUpdateUserStatus = false;
+
+    switch (subscription.status) {
+      case 'active':
+        newStatus = 'active';
+        shouldUpdateUserStatus = true;
+        break;
+      case 'canceled':
+        newStatus = 'cancelled';
+        shouldUpdateUserStatus = false;
+        break;
+      case 'incomplete':
+      case 'incomplete_expired':
+        newStatus = 'failed';
+        shouldUpdateUserStatus = false;
+        break;
+      case 'past_due':
+        newStatus = 'failed';
+        shouldUpdateUserStatus = false;
+        break;
+      case 'unpaid':
+        newStatus = 'failed';
+        shouldUpdateUserStatus = false;
+        break;
+    }
+
+    // Update subscription
+    await existingSubscription.update({
+      status: newStatus,
+      cancelledAt: subscription.status === 'canceled' ? new Date() : null,
+      autoRenew: subscription.status === 'active',
+      metadata: {
+        ...existingSubscription.metadata,
+        stripeStatus: subscription.status,
+        updatedAt: new Date().toISOString()
+      }
+    });
+
+    // Update user status if needed
+    if (shouldUpdateUserStatus !== null) {
+      await existingSubscription.user.update({ subscribed: shouldUpdateUserStatus });
+    }
+
+    console.log(`Subscription updated: ${existingSubscription.id}, status: ${newStatus}`);
+
+  } catch (error) {
+    console.error('Error handling subscription updated:', error);
+    throw error;
+  }
+};
+
+// Handle subscription deletion
+const handleSubscriptionDeleted = async (subscription) => {
+  try {
+    console.log('Processing customer.subscription.deleted:', subscription.id);
+
+    const existingSubscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: subscription.id },
+      include: [{ model: User, as: 'user' }]
+    });
+
+    if (!existingSubscription) {
+      console.log(`No subscription found for Stripe ID: ${subscription.id}`);
+      return;
+    }
+
+    // Update subscription status
+    await existingSubscription.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      autoRenew: false,
+      metadata: {
+        ...existingSubscription.metadata,
+        stripeStatus: 'canceled',
+        deletedAt: new Date().toISOString()
+      }
+    });
+
+    // Update user status
+    await existingSubscription.user.update({ subscribed: false });
+
+    console.log(`Subscription cancelled: ${existingSubscription.id}`);
+
+  } catch (error) {
+    console.error('Error handling subscription deleted:', error);
+    throw error;
+  }
+};
+
+// Handle successful invoice payment
+const handleInvoicePaymentSucceeded = async (invoice) => {
+  try {
+    console.log('Processing invoice.payment_succeeded:', invoice.id);
+
+    if (!invoice.subscription) {
+      return; // Not a subscription invoice
+    }
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: invoice.subscription }
+    });
+
+    if (!subscription) {
+      console.log(`No subscription found for Stripe ID: ${invoice.subscription}`);
+      return;
+    }
+
+    // Calculate next payment date
+    const nextPaymentDate = calculateNextPaymentDate(new Date(), subscription.planType);
+
+    // Update subscription
+    await subscription.update({
+      status: 'active',
+      lastPaymentDate: new Date(),
+      nextPaymentDate,
+      metadata: {
+        ...subscription.metadata,
+        lastInvoiceId: invoice.id,
+        lastPaymentAmount: invoice.amount_paid,
+        paymentSucceededAt: new Date().toISOString()
+      }
+    });
+
+    console.log(`Payment recorded for subscription: ${subscription.id}`);
+
+  } catch (error) {
+    console.error('Error handling invoice payment succeeded:', error);
+    throw error;
+  }
+};
+
+// Handle failed invoice payment
+const handleInvoicePaymentFailed = async (invoice) => {
+  try {
+    console.log('Processing invoice.payment_failed:', invoice.id);
+
+    if (!invoice.subscription) {
+      return; // Not a subscription invoice
+    }
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: invoice.subscription },
+      include: [{ model: User, as: 'user' }]
+    });
+
+    if (!subscription) {
+      console.log(`No subscription found for Stripe ID: ${invoice.subscription}`);
+      return;
+    }
+
+    // Update subscription status
+    await subscription.update({
+      status: 'failed',
+      metadata: {
+        ...subscription.metadata,
+        failedInvoiceId: invoice.id,
+        paymentFailedAt: new Date().toISOString()
+      }
+    });
+
+    // Optionally update user status (you might want to keep them subscribed for grace period)
+    // await subscription.user.update({ subscribed: false });
+
+    console.log(`Payment failed for subscription: ${subscription.id}`);
+
+  } catch (error) {
+    console.error('Error handling invoice payment failed:', error);
+    throw error;
+  }
+};
+
+// Handle payment intent success (for one-time payments)
+const handlePaymentIntentSucceeded = async (paymentIntent) => {
+  try {
+    console.log('Processing payment_intent.succeeded:', paymentIntent.id);
+
+    // Find subscription by payment intent ID
+    const subscription = await Subscription.findOne({
+      where: { stripePaymentIntentId: paymentIntent.id }
+    });
+
+    if (subscription && subscription.status === 'pending') {
+      await subscription.update({
+        status: 'active',
+        lastPaymentDate: new Date(),
+        metadata: {
+          ...subscription.metadata,
+          paymentIntentSucceeded: true,
+          activatedAt: new Date().toISOString()
+        }
+      });
+
+      // Update user status
+      await User.update(
+        { subscribed: true },
+        { where: { id: subscription.userId } }
+      );
+
+      console.log(`Payment intent succeeded for subscription: ${subscription.id}`);
+    }
+
+  } catch (error) {
+    console.error('Error handling payment intent succeeded:', error);
+    throw error;
+  }
+};
+
+// Handle payment intent failure
+const handlePaymentIntentFailed = async (paymentIntent) => {
+  try {
+    console.log('Processing payment_intent.payment_failed:', paymentIntent.id);
+
+    // Find subscription by payment intent ID
+    const subscription = await Subscription.findOne({
+      where: { stripePaymentIntentId: paymentIntent.id }
+    });
+
+    if (subscription) {
+      await subscription.update({
+        status: 'failed',
+        metadata: {
+          ...subscription.metadata,
+          paymentIntentFailed: true,
+          failedAt: new Date().toISOString()
+        }
+      });
+
+      console.log(`Payment intent failed for subscription: ${subscription.id}`);
+    }
+
+  } catch (error) {
+    console.error('Error handling payment intent failed:', error);
+    throw error;
+  }
+};
+
 
 // Helper function to calculate end date based on plan type
 const calculateEndDate = (startDate, planType) => {
@@ -137,214 +662,6 @@ const getPriceById = async (req, res) => {
   }
 };
 
-// Create subscription record (called from frontend after successful payment)
-const createSubscription = async (req, res) => {
-  try {
-    const { 
-      userId, 
-      currencyId, 
-      planType, 
-      priceId, // Added priceId parameter
-      stripeCustomerId,
-      stripeSubscriptionId,
-      stripePaymentIntentId,
-      paymentMethod,
-      amount,
-      currency
-    } = req.body;
-
-    // Validate required fields
-    if (!userId || !currencyId || !planType || !stripeSubscriptionId) {
-      return res.status(400).json({
-        msg: 'User ID, Currency ID, Plan Type, and Stripe Subscription ID are required'
-      });
-    }
-
-    // Check if user exists
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
-    }
-
-    // Get currency details if amount not provided
-    let subscriptionAmount = amount;
-    let subscriptionCurrency = currency;
-    
-    if (!amount || !currency) {
-      const currencyRecord = await Currency.findByPk(currencyId);
-      if (!currencyRecord) {
-        return res.status(404).json({ msg: 'Currency not found' });
-      }
-
-      // Validate priceId matches the plan type if provided
-      if (priceId) {
-        let expectedPriceId;
-        switch (planType) {
-          case 'monthly':
-            expectedPriceId = currencyRecord.monthlyPriceId;
-            break;
-          case 'quarterly':
-            expectedPriceId = currencyRecord.quarterlyPriceId;
-            break;
-          case 'annually':
-            expectedPriceId = currencyRecord.annuallyPriceId;
-            break;
-        }
-
-        if (expectedPriceId !== priceId) {
-          return res.status(400).json({ 
-            msg: 'Price ID does not match the selected plan type' 
-          });
-        }
-      }
-
-      // Get amount based on plan type
-      switch (planType) {
-        case 'monthly':
-          subscriptionAmount = parseFloat(currencyRecord.monthly);
-          break;
-        case 'quarterly':
-          subscriptionAmount = parseFloat(currencyRecord.quarterly);
-          break;
-        case 'annually':
-          subscriptionAmount = parseFloat(currencyRecord.annually);
-          break;
-        default:
-          return res.status(400).json({ msg: 'Invalid plan type' });
-      }
-      subscriptionCurrency = currencyRecord.currency;
-    }
-
-    // Check if user already has an active subscription
-    const existingSubscription = await Subscription.findOne({
-      where: {
-        userId,
-        status: ['active', 'pending']
-      }
-    });
-
-    if (existingSubscription) {
-      return res.status(400).json({
-        msg: 'User already has an active or pending subscription'
-      });
-    }
-
-    // Calculate dates
-    const startDate = new Date();
-    const endDate = calculateEndDate(startDate, planType);
-    const nextPaymentDate = calculateNextPaymentDate(startDate, planType);
-
-    // Create subscription record
-    const subscription = await Subscription.create({
-      userId,
-      currencyId,
-      stripeCustomerId,
-      stripeSubscriptionId,
-      stripePaymentIntentId,
-      planType,
-      amount: subscriptionAmount,
-      currency: subscriptionCurrency,
-      status: 'active',
-      startDate,
-      endDate,
-      autoRenew: true,
-      paymentMethod: paymentMethod || 'card',
-      lastPaymentDate: startDate,
-      nextPaymentDate,
-      metadata: {
-        priceId: priceId || null, // Store priceId in metadata for reference
-        createdFromFrontend: true,
-        createdAt: new Date().toISOString()
-      }
-    });
-
-    // Update user subscription status
-    await user.update({ subscribed: true });
-
-    return res.status(201).json({
-      msg: 'Subscription created successfully',
-      subscription: {
-        id: subscription.id,
-        status: subscription.status,
-        planType: subscription.planType,
-        startDate: subscription.startDate,
-        endDate: subscription.endDate,
-        amount: subscription.amount,
-        currency: subscription.currency,
-        autoRenew: subscription.autoRenew,
-        priceId: priceId || null
-      }
-    });
-
-  } catch (error) {
-    console.error('Error creating subscription:', error);
-    return res.status(500).json({
-      msg: 'Failed to create subscription',
-      error: error.message
-    });
-  }
-};
-
-// Update subscription status (for webhook handling or manual updates)
-const updateSubscriptionStatus = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-    const { 
-      status, 
-      stripeSubscriptionId, 
-      cancelReason,
-      metadata 
-    } = req.body;
-
-    const subscription = await Subscription.findByPk(subscriptionId, {
-      include: [{ model: User, as: 'user' }]
-    });
-
-    if (!subscription) {
-      return res.status(404).json({ msg: 'Subscription not found' });
-    }
-
-    // Prepare update data
-    const updateData = {};
-    if (status) updateData.status = status;
-    if (stripeSubscriptionId) updateData.stripeSubscriptionId = stripeSubscriptionId;
-    if (cancelReason) updateData.cancelReason = cancelReason;
-    if (metadata) updateData.metadata = { ...subscription.metadata, ...metadata };
-
-    // Handle status-specific updates
-    if (status === 'cancelled') {
-      updateData.cancelledAt = new Date();
-      updateData.autoRenew = false;
-      // Update user subscription status
-      await subscription.user.update({ subscribed: false });
-    }
-
-    if (status === 'expired') {
-      updateData.autoRenew = false;
-      // Update user subscription status
-      await subscription.user.update({ subscribed: false });
-    }
-
-    // Update subscription
-    await subscription.update(updateData);
-
-    return res.status(200).json({
-      msg: 'Subscription updated successfully',
-      subscription: {
-        id: subscription.id,
-        status: subscription.status,
-        cancelledAt: subscription.cancelledAt
-      }
-    });
-
-  } catch (error) {
-    console.error('Error updating subscription:', error);
-    return res.status(500).json({
-      msg: 'Failed to update subscription',
-      error: error.message
-    });
-  }
-};
 
 // Get user's subscription details
 const getUserSubscription = async (req, res) => {
@@ -429,77 +746,6 @@ const cancelSubscription = async (req, res) => {
   }
 };
 
-// Webhook handler for Stripe events (simplified)
-const handleStripeWebhook = async (req, res) => {
-  try {
-    // Note: You'll need to validate the webhook signature on frontend or use a separate endpoint
-    const { type, data } = req.body;
-
-    switch (type) {
-      case 'customer.subscription.updated':
-        const updatedSubscription = data.object;
-        await Subscription.update(
-          { 
-            status: updatedSubscription.status,
-            metadata: {
-              stripeStatus: updatedSubscription.status,
-              updatedAt: new Date().toISOString()
-            }
-          },
-          { where: { stripeSubscriptionId: updatedSubscription.id } }
-        );
-        break;
-
-      case 'customer.subscription.deleted':
-        const deletedSubscription = data.object;
-        const subscription = await Subscription.findOne({
-          where: { stripeSubscriptionId: deletedSubscription.id },
-          include: [{ model: User, as: 'user' }]
-        });
-        
-        if (subscription) {
-          await subscription.update({
-            status: 'cancelled',
-            cancelledAt: new Date(),
-            autoRenew: false
-          });
-          await subscription.user.update({ subscribed: false });
-        }
-        break;
-
-      case 'invoice.payment_succeeded':
-        const invoice = data.object;
-        if (invoice.subscription) {
-          await Subscription.update(
-            { 
-              lastPaymentDate: new Date(),
-              status: 'active'
-            },
-            { where: { stripeSubscriptionId: invoice.subscription } }
-          );
-        }
-        break;
-
-      case 'invoice.payment_failed':
-        const failedInvoice = data.object;
-        if (failedInvoice.subscription) {
-          await Subscription.update(
-            { status: 'failed' },
-            { where: { stripeSubscriptionId: failedInvoice.subscription } }
-          );
-        }
-        break;
-
-      default:
-        console.log(`Unhandled event type ${type}`);
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Error handling webhook:', error);
-    res.status(500).json({ error: 'Webhook handling failed' });
-  }
-};
 
 // Get all subscriptions (admin endpoint)
 const getAllSubscriptions = async (req, res) => {
@@ -574,12 +820,18 @@ const validateSubscription = async (req, res) => {
 
 module.exports = {
   getSubscriptionPlans,
-  getPriceById, // New function to get price details by priceId
-  createSubscription,
-  updateSubscriptionStatus,
+  getPriceById, 
   getUserSubscription,
   cancelSubscription,
   handleStripeWebhook,
   getAllSubscriptions,
-  validateSubscription
+  validateSubscription,
+  handleCheckoutSessionCompleted,
+  handleSubscriptionCreated,
+  handleSubscriptionUpdated,
+  handleSubscriptionDeleted,
+  handleInvoicePaymentSucceeded,
+  handleInvoicePaymentFailed,
+  handlePaymentIntentSucceeded,
+  handlePaymentIntentFailed
 };
