@@ -328,6 +328,84 @@ const readUserCommunities = async (req, res) => {
   }
 };
 
+
+
+// Admin-specific connector creation
+const adminCreateConnector = async (req, res) => {
+  try {
+    console.log("Admin creating connector:", req.body);
+    
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      role,
+      description,
+      communityName,
+      website,
+      linkedIn,
+      whatsapp,
+      telegram,
+      twitter,
+      instagram,
+      accessRequirement,
+      connectionType,
+      connectionPlatform,
+      sourceOfInfo,
+      // Admin can set verification status
+      verified = false,
+      // Admin sets userId as null or assigns to a specific user
+      userId = null
+    } = req.body;
+
+    // If communityName is provided, verify it exists
+    if (communityName) {
+      const community = await Community.findOne({ where: { name: communityName } });
+      if (!community) {
+        return res.status(404).json({ msg: "Community not found" });
+      }
+    }
+
+    // Create connector record
+    const record = await Connector.create({
+      firstName,
+      lastName,
+      email,
+      phone: phone || null,
+      role,
+      description: description || null,
+      communityName: communityName || null,
+      website: website || '',
+      linkedIn: linkedIn || null,
+      whatsapp: whatsapp || null,
+      telegram: telegram || null,
+      twitter: twitter || null,
+      instagram: instagram || null,
+      accessRequirement: accessRequirement || 'Open Access',
+      connectionType: connectionType || 'Professional',
+      connectionPlatform: connectionPlatform || 'Email',
+      sourceOfInfo: sourceOfInfo || 'Admin Created',
+      verified,
+      restrict: false, // Admin created connectors are not restricted by default
+      subscribed: false,
+      userId
+    });
+
+    return res.status(201).json({ 
+      record, 
+      msg: "Connector created successfully by admin" 
+    });
+  } catch (error) {
+    console.error("Error in admin connector creation:", error);
+    return res.status(500).json({ 
+      msg: "Failed to create connector", 
+      error: error.message 
+    });
+  }
+};
+
+
 module.exports = {
   create,
   readall,
@@ -337,5 +415,6 @@ module.exports = {
   readId,
   update,
   deleteId,
-  readUserCommunities 
+  readUserCommunities,
+  adminCreateConnector
 };

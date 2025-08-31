@@ -360,6 +360,80 @@ const readUserCommunities = async (req, res) => {
   }
 };
 
+
+// Admin-specific community creation
+const adminCreateCommunity = async (req, res) => {
+  try {
+    console.log("Admin creating community:", req.body);
+    
+    const {
+      name,
+      email,
+      phone,
+      description,
+      communityType,
+      size,
+      location,
+      state,
+      website,
+      whatsapp,
+      telegram,
+      twitter,
+      engagementLevel,
+      frequency,
+      accessType,
+      communicationPlatform,
+      // Admin can set verification status
+      verified = false,
+      // Admin sets userId as null or assigns to a specific user
+      userId = null
+    } = req.body;
+
+    // Check if community name already exists
+    const existingCommunity = await Community.findOne({ where: { name } });
+    if (existingCommunity) {
+      return res.status(400).json({ msg: "Community with this name already exists" });
+    }
+
+    // Create community record
+    const record = await Community.create({
+      name,
+      email,
+      phone: phone || null,
+      description: description || null,
+      communityType: communityType || null,
+      size: size || null,
+      location: location || null,
+      state: state || null,
+      website: website || null,
+      whatsapp: whatsapp || null,
+      telegram: telegram || null,
+      twitter: twitter || null,
+      engagementLevel: engagementLevel || null,
+      frequency: frequency || null,
+      accessType: accessType || 'Free',
+      communicationPlatform: communicationPlatform || null,
+      verified,
+      restrict: false, // Admin created communities are not restricted by default
+      userId,
+      rating: 5.0 // Default rating
+    });
+
+    return res.status(201).json({ 
+      record, 
+      msg: "Community created successfully by admin" 
+    });
+  } catch (error) {
+    console.error("Error in admin community creation:", error);
+    return res.status(500).json({ 
+      msg: "Failed to create community", 
+      error: error.message 
+    });
+  }
+};
+
+
+
 module.exports = {
   create,
   readall,
@@ -369,5 +443,7 @@ module.exports = {
   readId,
   update,
   deleteId,
-  readUserCommunities 
+  readUserCommunities,
+  adminCreateCommunity,
+  
 };

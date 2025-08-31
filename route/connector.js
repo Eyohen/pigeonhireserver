@@ -1,7 +1,11 @@
 // route/connector.js
 const express = require('express');
 
-const {create, readall, countConnector, toggleRestrict, readRestrictedCommunities, readId, update, deleteId, readUserCommunities} = require('../controller/connector')
+const {create, readall,
+     countConnector, toggleRestrict,
+      readRestrictedCommunities, readId, 
+      update, deleteId,
+    readUserCommunities, adminCreateConnector} = require('../controller/connector')
 
 const router = express.Router();
 
@@ -44,5 +48,7 @@ router.delete(
     deleteId
 );
 router.get("/:userId/communities", readUserCommunities); 
+
+router.post('/admin/create', adminCreateConnector);
 
 module.exports = router;

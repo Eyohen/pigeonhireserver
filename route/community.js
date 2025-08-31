@@ -10,7 +10,8 @@ const {
   readId,
   update,
   deleteId,
-  readUserCommunities
+  readUserCommunities,
+  adminCreateCommunity
 } = require('../controller/community');
 
 const router = express.Router();
@@ -73,5 +74,7 @@ router.get(
   "/:userId/communities",
   readUserCommunities
 );
+
+router.post('/admin/create', adminCreateCommunity);
 
 module.exports = router;

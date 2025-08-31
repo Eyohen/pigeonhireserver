@@ -1,3 +1,4 @@
+//route/blog.js
 const express = require('express');
 
 const {create, readall, readId, update, deleteId} = require('../controller/blog')

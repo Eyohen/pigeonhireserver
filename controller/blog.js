@@ -1,3 +1,4 @@
+//controller/blog.js
 const { Request, Response } = require("express");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require('bcrypt');

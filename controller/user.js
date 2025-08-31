@@ -11,6 +11,7 @@ const { totalmem } = require("os");
 const { Op } = require("sequelize");
 const { permission } = require("process");
 const { subscribe } = require("diagnostics_channel");
+const { error } = require("console");
 
 const register = async (req, res) => {
   try {
@@ -420,28 +421,33 @@ const readall = async (req, res) => {
       },
       limit: parseInt(limit),
       offset: parseInt(offset),
-      include: [
-        {
-          model: Review,
-          // Don't need 'as' since we didn't specify an alias in the association
-          attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
-          include: [
-            {
-              model: User,
-              as: "Reviewer",
-              attributes: ["firstName", "lastName"],
-            },
-          ],
-        },
-      ],
-    });
+    //   include: [
+    //     {
+    //       model: Review,
+    //       // Don't need 'as' since we didn't specify an alias in the association
+    //       attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
+    //       include: [
+    //         {
+    //           model: User,
+    //           as: "Reviewer",
+    //           attributes: ["firstName", "lastName"],
+    //         },
+    //       ],
+    //     },
+    // ],
+     });
     return res.json({
       users,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
     });
   } catch (e) {
-    return res.json({ msg: "fail to read", status: 500, route: "/read" });
+    console.error("Actual error:", e);
+    return res.status(500).json({ 
+      msg: "fail to read",
+      error:e.message,
+      status: 500,
+      route: "/read" });
   }
 };
 
