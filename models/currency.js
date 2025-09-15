@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     monthlyPriceId: {
       type: DataTypes.STRING,
-      allowNull: true, // You can make this required later
+      allowNull: true, 
       comment: 'Stripe Price ID for monthly plan'
     },
     quarterly: {

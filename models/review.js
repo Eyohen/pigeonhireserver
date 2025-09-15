@@ -16,11 +16,8 @@ module.exports = (sequelize, DataTypes) => {
         as: 'Reviewer' 
       });
       
-      // Association for community being reviewed
-      Review.belongsTo(models.Comunity, { 
-        foreignKey: 'communityId', 
-        as: 'Community' 
-      });
+   
+     
     }
   }
   
@@ -52,15 +49,7 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    // This field refers to the community being reviewed (optional if reviewing a user)
-    communityId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'Comunities',
-        key: 'id'
-      }
-    },
+  
     // This field refers to who created the review
     reviewerId: {
       type: DataTypes.UUID,

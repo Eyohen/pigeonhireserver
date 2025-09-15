@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../models");
-const { User, Review } = db;
+const { User, Review, Subscription, Currency } = db;
 const { sendVerificationEmail } = require("../utils/nodemailer");
 const crypto = require("crypto");
 const { sendResetPasswordEmail } = require("../utils/nodemailer");
@@ -412,27 +412,38 @@ const profile = async (req, res) => {
 const manualSubscribe = async (req, res) => {
     try {
         const { id } = req.params;
-        const { planType = 'monthly', currencyId } = req.body;
+        const { planType = 'monthly', currencyCode = 'USD' } = req.body;
 
-        // Update user subscription status
         const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update user subscribed field
+        // Get currency by code
+        const currency = await Currency.findOne({
+            where: { currency: currencyCode }
+        });
+
+        if (!currency) {
+            return res.status(400).json({ 
+                message: `Currency ${currencyCode} not found` 
+            });
+        }
+
+        // Get amount based on plan type
+        const amount = currency[planType] || 0;
+
         await user.update({ subscribed: true });
 
-        // Create a manual subscription record
         const subscription = await Subscription.create({
             userId: id,
-            currencyId: currencyId || '1', // Default currency ID or get from req.body
+            currencyId: currency.id,
             planType,
             status: 'active',
-            amount: 0, // Manual subscription - no charge
-            currency: 'USD',
+            amount,
+            currency: currencyCode,
             startDate: new Date(),
-            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
             paymentMethod: 'manual',
             autoRenew: false,
             metadata: {
@@ -443,10 +454,7 @@ const manualSubscribe = async (req, res) => {
 
         res.status(200).json({
             message: 'User manually subscribed successfully',
-            user: {
-                id: user.id,
-                subscribed: user.subscribed
-            },
+            user: { id: user.id, subscribed: user.subscribed },
             subscription
         });
 
@@ -458,6 +466,7 @@ const manualSubscribe = async (req, res) => {
         });
     }
 };
+
 
 const manualUnsubscribe = async (req, res) => {
     try {

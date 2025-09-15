@@ -191,15 +191,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    ownerId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: "Owners",
-        key: "id",
-      },
-      onDelete: 'CASCADE'
-    },
     userId: {
       type: DataTypes.UUID,
       allowNull: true,
