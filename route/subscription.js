@@ -1,4 +1,4 @@
-//route/subscription.js - Corrected version
+//route/subscription.js
 
 const express = require('express');
 const {

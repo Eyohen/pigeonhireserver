@@ -408,48 +408,184 @@ const profile = async (req, res) => {
   }
 };
 
-const readall = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = "" } = req.query;
-    const offset = (page - 1) * limit;
 
-    const { count, rows: users } = await User.findAndCountAll({
-      where: {
-        firstName: {
-          [Op.iLike]: `%${search}%`,
-        },
-      },
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    //   include: [
-    //     {
-    //       model: Review,
-    //       // Don't need 'as' since we didn't specify an alias in the association
-    //       attributes: ["id", "rating", "comment", "createdAt", "reviewerId"],
-    //       include: [
-    //         {
-    //           model: User,
-    //           as: "Reviewer",
-    //           attributes: ["firstName", "lastName"],
-    //         },
-    //       ],
-    //     },
-    // ],
-     });
-    return res.json({
-      users,
-      totalPages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
-    });
-  } catch (e) {
-    console.error("Actual error:", e);
-    return res.status(500).json({ 
-      msg: "fail to read",
-      error:e.message,
-      status: 500,
-      route: "/read" });
-  }
+const manualSubscribe = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { planType = 'monthly', currencyId } = req.body;
+
+        // Update user subscription status
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update user subscribed field
+        await user.update({ subscribed: true });
+
+        // Create a manual subscription record
+        const subscription = await Subscription.create({
+            userId: id,
+            currencyId: currencyId || '1', // Default currency ID or get from req.body
+            planType,
+            status: 'active',
+            amount: 0, // Manual subscription - no charge
+            currency: 'USD',
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+            paymentMethod: 'manual',
+            autoRenew: false,
+            metadata: {
+                type: 'manual',
+                createdBy: 'admin'
+            }
+        });
+
+        res.status(200).json({
+            message: 'User manually subscribed successfully',
+            user: {
+                id: user.id,
+                subscribed: user.subscribed
+            },
+            subscription
+        });
+
+    } catch (error) {
+        console.error('Manual subscribe error:', error);
+        res.status(500).json({ 
+            message: 'Failed to subscribe user',
+            error: error.message 
+        });
+    }
 };
+
+const manualUnsubscribe = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Update user subscription status
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update user subscribed field
+        await user.update({ subscribed: false });
+
+        // Cancel any active subscriptions
+        await Subscription.update(
+            { 
+                status: 'cancelled',
+                cancelledAt: new Date(),
+                cancelReason: 'Manually cancelled by admin'
+            },
+            { 
+                where: { 
+                    userId: id, 
+                    status: 'active' 
+                } 
+            }
+        );
+
+        res.status(200).json({
+            message: 'User manually unsubscribed successfully',
+            user: {
+                id: user.id,
+                subscribed: user.subscribed
+            }
+        });
+
+    } catch (error) {
+        console.error('Manual unsubscribe error:', error);
+        res.status(500).json({ 
+            message: 'Failed to unsubscribe user',
+            error: error.message 
+        });
+    }
+};
+
+// const readall = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, search = "" } = req.query;
+//     const offset = (page - 1) * limit;
+
+//     const { count, rows: users } = await User.findAndCountAll({
+//       where: {
+//         firstName: {
+//           [Op.iLike]: `%${search}%`,
+//         },
+//       },
+//       limit: parseInt(limit),
+//       offset: parseInt(offset),
+//      });
+//     return res.json({
+//       users,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: parseInt(page),
+//     });
+//   } catch (e) {
+//     console.error("Actual error:", e);
+//     return res.status(500).json({ 
+//       msg: "fail to read",
+//       error:e.message,
+//       status: 500,
+//       route: "/read" });
+//   }
+// };
+const readall = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * limit;
+
+        const whereClause = search ? {
+            [Op.or]: [
+                { firstName: { [Op.iLike]: `%${search}%` } },
+                { lastName: { [Op.iLike]: `%${search}%` } },
+                { email: { [Op.iLike]: `%${search}%` } }
+            ]
+        } : {};
+
+        const { count, rows: users } = await User.findAndCountAll({
+            where: whereClause,
+            include: [
+                {
+                    model: Subscription,
+                    as: 'subscriptions',
+                    where: { status: 'active' },
+                    required: false, // This makes it a LEFT JOIN
+                    order: [['createdAt', 'DESC']],
+                    limit: 1
+                }
+            ],
+            limit,
+            offset,
+            order: [['createdAt', 'DESC']],
+            attributes: { exclude: ['password', 'resetPasswordOTP', 'resetPasswordToken'] }
+        });
+
+        const totalPages = Math.ceil(count / limit);
+
+        res.status(200).json({
+            users,
+            totalCount: count,
+            totalPages,
+            currentPage: page,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        });
+
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ 
+            message: 'Failed to fetch users',
+            error: error.message 
+        });
+    }
+};
+
+
 
 const readId = async (req, res) => {
   try {
@@ -910,4 +1046,6 @@ module.exports = {
   getProfile: profile, // Use existing profile function or replace with getProfile
   uploadProfileImage,
   changePassword,
+  manualSubscribe,
+  manualUnsubscribe
 };
