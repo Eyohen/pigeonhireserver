@@ -1,3 +1,4 @@
+//utils/nodemailer.js
 const nodemailer = require("nodemailer");
 console.log(process.env.EMAIL_PASS);
 // Create a Nodemailer transporter using SMTP transport

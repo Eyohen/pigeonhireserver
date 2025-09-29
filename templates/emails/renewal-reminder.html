@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pigeonhire Subscription Renewal Reminder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .reminder-icon {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .clock-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+        }
+        .renewal-details {
+            background-color: #eff6ff;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+            font-weight: bold;
+            padding-top: 10px;
+            border-top: 1px solid #dbeafe;
+        }
+        .countdown {
+            text-align: center;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .countdown-number {
+            font-size: 48px;
+            font-weight: bold;
+            display: block;
+        }
+        .countdown-text {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .benefits-reminder {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #0ea5e9;
+        }
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .benefit-icon {
+            color: #0ea5e9;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .secondary-button {
+            display: inline-block;
+            background: transparent;
+            color: #3b82f6;
+            border: 2px solid #3b82f6;
+            padding: 13px 28px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 10px 20px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #f97316;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">pigeonhire</div>
+            <h1>Renewal Reminder</h1>
+            <p>Your premium subscription expires soon</p>
+        </div>
+        
+        <div class="content">
+            <div class="reminder-icon">
+                <div class="clock-circle">⏰</div>
+            </div>
+            
+            <h2 style="text-align: center; margin-bottom: 20px;">Don't Lose Your Premium Access!</h2>
+            <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">
+                Hi {{userName}}, your Pigeonhire premium subscription is set to expire in 5 days. Renew now to continue enjoying all premium features.
+            </p>
+            
+            <div class="countdown">
+                <span class="countdown-number">5</span>
+                <div class="countdown-text">Days Until Expiration</div>
+            </div>
+            
+            <div class="renewal-details">
+                <h3 style="margin-bottom: 15px; color: #3b82f6;">Current Subscription Details</h3>
+                <div class="detail-row">
+                    <span>Plan Type:</span>
+                    <span>{{planType}} Plan</span>
+                </div>
+                <div class="detail-row">
+                    <span>Current Period:</span>
+                    <span>{{currentPeriodStart}} - {{currentPeriodEnd}}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Expiration Date:</span>
+                    <span>{{expirationDate}}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Renewal Amount:</span>
+                    <span>{{renewalAmount}} {{currency}}</span>
+                </div>
+            </div>
+            
+            <div class="benefits-reminder">
+                <h3 style="margin-bottom: 20px; color: #0ea5e9;">Don't Lose Access To:</h3>
+                <div class="benefit-item">
+                    <span class="benefit-icon">✓</span>
+                    <span>Unlimited access to all communities</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">✓</span>
+                    <span>Direct contact with community connectors</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">✓</span>
+                    <span>Advanced search and filtering options</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">✓</span>
+                    <span>Priority customer support</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">✓</span>
+                    <span>Your saved communities and favorites</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{renewUrl}}" class="cta-button">Renew Subscription</a>
+                <a href="{{billingUrl}}" class="secondary-button">Update Payment Info</a>
+            </div>
+            
+            <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin-top: 30px; border-left: 4px solid #f59e0b;">
+                <h4 style="margin-bottom: 10px; color: #92400e;">Auto-Renewal Status</h4>
+                <p style="color: #92400e; font-size: 14px;">
+                    {{#if autoRenewEnabled}}
+                    ✓ Auto-renewal is enabled. Your subscription will automatically renew on {{expirationDate}} unless cancelled.
+                    {{else}}
+                    ⚠ Auto-renewal is disabled. You'll need to manually renew to continue your subscription.
+                    {{/if}}
+                </p>
+            </div>
+            
+            <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; text-align: center;">
+                Need help? Contact our support team at <a href="mailto:support@pigeonhire.com" style="color: #f97316;">support@pigeonhire.com</a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Questions? Contact us at <a href="mailto:support@pigeonhire.com">support@pigeonhire.com</a></p>
+            <p style="margin-top: 10px;">
+                <a href="{{renewUrl}}">Renew Now</a> | 
+                <a href="{{billingUrl}}">Manage Subscription</a> | 
+                <a href="{{unsubscribeUrl}}">Unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -12,6 +12,11 @@ const { Op } = require("sequelize");
 const { permission } = require("process");
 const { subscribe } = require("diagnostics_channel");
 const { error } = require("console");
+const { 
+  sendSubscriptionSuccessEmail, 
+  sendSubscriptionDeactivatedEmail 
+} = require('../utils/emailService');
+
 
 const register = async (req, res) => {
   try {
@@ -409,138 +414,112 @@ const profile = async (req, res) => {
 };
 
 
-const manualSubscribe = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { planType = 'monthly', currencyCode = 'USD' } = req.body;
+// const manualSubscribe = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { planType = 'monthly', currencyCode = 'USD' } = req.body;
 
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+//         const user = await User.findByPk(id);
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
 
-        // Get currency by code
-        const currency = await Currency.findOne({
-            where: { currency: currencyCode }
-        });
+//         // Get currency by code
+//         const currency = await Currency.findOne({
+//             where: { currency: currencyCode }
+//         });
 
-        if (!currency) {
-            return res.status(400).json({ 
-                message: `Currency ${currencyCode} not found` 
-            });
-        }
+//         if (!currency) {
+//             return res.status(400).json({ 
+//                 message: `Currency ${currencyCode} not found` 
+//             });
+//         }
 
-        // Get amount based on plan type
-        const amount = currency[planType] || 0;
+//         // Get amount based on plan type
+//         const amount = currency[planType] || 0;
 
-        await user.update({ subscribed: true });
+//         await user.update({ subscribed: true });
 
-        const subscription = await Subscription.create({
-            userId: id,
-            currencyId: currency.id,
-            planType,
-            status: 'active',
-            amount,
-            currency: currencyCode,
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            paymentMethod: 'manual',
-            autoRenew: false,
-            metadata: {
-                type: 'manual',
-                createdBy: 'admin'
-            }
-        });
+//         const subscription = await Subscription.create({
+//             userId: id,
+//             currencyId: currency.id,
+//             planType,
+//             status: 'active',
+//             amount,
+//             currency: currencyCode,
+//             startDate: new Date(),
+//             endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+//             paymentMethod: 'manual',
+//             autoRenew: false,
+//             metadata: {
+//                 type: 'manual',
+//                 createdBy: 'admin'
+//             }
+//         });
 
-        res.status(200).json({
-            message: 'User manually subscribed successfully',
-            user: { id: user.id, subscribed: user.subscribed },
-            subscription
-        });
+//         res.status(200).json({
+//             message: 'User manually subscribed successfully',
+//             user: { id: user.id, subscribed: user.subscribed },
+//             subscription
+//         });
 
-    } catch (error) {
-        console.error('Manual subscribe error:', error);
-        res.status(500).json({ 
-            message: 'Failed to subscribe user',
-            error: error.message 
-        });
-    }
-};
-
-
-const manualUnsubscribe = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        // Update user subscription status
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Update user subscribed field
-        await user.update({ subscribed: false });
-
-        // Cancel any active subscriptions
-        await Subscription.update(
-            { 
-                status: 'cancelled',
-                cancelledAt: new Date(),
-                cancelReason: 'Manually cancelled by admin'
-            },
-            { 
-                where: { 
-                    userId: id, 
-                    status: 'active' 
-                } 
-            }
-        );
-
-        res.status(200).json({
-            message: 'User manually unsubscribed successfully',
-            user: {
-                id: user.id,
-                subscribed: user.subscribed
-            }
-        });
-
-    } catch (error) {
-        console.error('Manual unsubscribe error:', error);
-        res.status(500).json({ 
-            message: 'Failed to unsubscribe user',
-            error: error.message 
-        });
-    }
-};
-
-// const readall = async (req, res) => {
-//   try {
-//     const { page = 1, limit = 10, search = "" } = req.query;
-//     const offset = (page - 1) * limit;
-
-//     const { count, rows: users } = await User.findAndCountAll({
-//       where: {
-//         firstName: {
-//           [Op.iLike]: `%${search}%`,
-//         },
-//       },
-//       limit: parseInt(limit),
-//       offset: parseInt(offset),
-//      });
-//     return res.json({
-//       users,
-//       totalPages: Math.ceil(count / limit),
-//       currentPage: parseInt(page),
-//     });
-//   } catch (e) {
-//     console.error("Actual error:", e);
-//     return res.status(500).json({ 
-//       msg: "fail to read",
-//       error:e.message,
-//       status: 500,
-//       route: "/read" });
-//   }
+//     } catch (error) {
+//         console.error('Manual subscribe error:', error);
+//         res.status(500).json({ 
+//             message: 'Failed to subscribe user',
+//             error: error.message 
+//         });
+//     }
 // };
+
+
+// const manualUnsubscribe = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+
+//         // Update user subscription status
+//         const user = await User.findByPk(id);
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found' });
+//         }
+
+//         // Update user subscribed field
+//         await user.update({ subscribed: false });
+
+//         // Cancel any active subscriptions
+//         await Subscription.update(
+//             { 
+//                 status: 'cancelled',
+//                 cancelledAt: new Date(),
+//                 cancelReason: 'Manually cancelled by admin'
+//             },
+//             { 
+//                 where: { 
+//                     userId: id, 
+//                     status: 'active' 
+//                 } 
+//             }
+//         );
+
+//         res.status(200).json({
+//             message: 'User manually unsubscribed successfully',
+//             user: {
+//                 id: user.id,
+//                 subscribed: user.subscribed
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error('Manual unsubscribe error:', error);
+//         res.status(500).json({ 
+//             message: 'Failed to unsubscribe user',
+//             error: error.message 
+//         });
+//     }
+// };
+
+
+
 const readall = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -1031,6 +1010,175 @@ const changePassword = async (req, res) => {
     });
   }
 };
+
+
+// Updated manualSubscribe function
+const manualSubscribe = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { planType = 'monthly', currencyCode = 'USD' } = req.body;
+
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Get currency by code
+        const currency = await Currency.findOne({
+            where: { currency: currencyCode }
+        });
+
+        if (!currency) {
+            return res.status(400).json({ 
+                message: `Currency ${currencyCode} not found` 
+            });
+        }
+
+        // Get amount based on plan type
+        const amount = currency[planType] || 0;
+
+        await user.update({ subscribed: true });
+
+        const subscription = await Subscription.create({
+            userId: id,
+            currencyId: currency.id,
+            planType,
+            status: 'active',
+            amount,
+            currency: currencyCode,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            paymentMethod: 'manual',
+            autoRenew: false,
+            lastPaymentDate: new Date(),
+            metadata: {
+                type: 'manual',
+                createdBy: 'admin'
+            }
+        });
+
+        // Send subscription success email
+        try {
+            const emailResult = await sendSubscriptionSuccessEmail(
+                user.email,
+                {
+                    firstName: user.firstName,
+                    lastName: user.lastName
+                },
+                {
+                    planType: subscription.planType,
+                    amount: subscription.amount,
+                    currency: subscription.currency,
+                    startDate: subscription.startDate
+                }
+            );
+            
+            console.log('Subscription email sent:', emailResult.success);
+        } catch (emailError) {
+            console.error('Failed to send subscription email:', emailError);
+            // Don't fail the subscription creation if email fails
+        }
+
+        res.status(200).json({
+            message: 'User manually subscribed successfully',
+            user: { id: user.id, subscribed: user.subscribed },
+            subscription,
+            emailSent: true
+        });
+
+    } catch (error) {
+        console.error('Manual subscribe error:', error);
+        res.status(500).json({ 
+            message: 'Failed to subscribe user',
+            error: error.message 
+        });
+    }
+};
+
+// Updated manualUnsubscribe function
+const manualUnsubscribe = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Get the user's active subscription for email details
+        const activeSubscription = await Subscription.findOne({
+            where: { 
+                userId: id, 
+                status: 'active' 
+            },
+            include: [
+                {
+                    model: Currency,
+                    as: 'currencyDetails'
+                }
+            ]
+        });
+
+        // Update user subscribed field
+        await user.update({ subscribed: false });
+
+        // Cancel any active subscriptions
+        await Subscription.update(
+            { 
+                status: 'cancelled',
+                cancelledAt: new Date(),
+                cancelReason: 'Manually cancelled by admin'
+            },
+            { 
+                where: { 
+                    userId: id, 
+                    status: 'active' 
+                } 
+            }
+        );
+
+        // Send deactivation email if there was an active subscription
+        if (activeSubscription) {
+            try {
+                const emailResult = await sendSubscriptionDeactivatedEmail(
+                    user.email,
+                    {
+                        firstName: user.firstName,
+                        lastName: user.lastName
+                    },
+                    {
+                        planType: activeSubscription.planType,
+                        amount: activeSubscription.amount,
+                        currency: activeSubscription.currency,
+                        cancelReason: 'Manually cancelled by admin',
+                        lastPaymentDate: activeSubscription.lastPaymentDate || activeSubscription.startDate,
+                        startDate: activeSubscription.startDate
+                    }
+                );
+                
+                console.log('Deactivation email sent:', emailResult.success);
+            } catch (emailError) {
+                console.error('Failed to send deactivation email:', emailError);
+                // Don't fail the unsubscription if email fails
+            }
+        }
+
+        res.status(200).json({
+            message: 'User manually unsubscribed successfully',
+            user: { id: user.id, subscribed: user.subscribed },
+            emailSent: activeSubscription ? true : false
+        });
+
+    } catch (error) {
+        console.error('Manual unsubscribe error:', error);
+        res.status(500).json({ 
+            message: 'Failed to unsubscribe user',
+            error: error.message 
+        });
+    }
+};
+
+
 
 module.exports = {
   register,
