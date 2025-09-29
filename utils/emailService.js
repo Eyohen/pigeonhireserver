@@ -4,6 +4,14 @@ const path = require('path');
 
 // Create transporter
 const createTransporter = () => {
+
+// Add verification
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Email credentials not configured');
+  }
+  
+  console.log('Email user configured:', process.env.EMAIL_USER);
+
   return nodemailer.createTransport({
     host: "smtp.zoho.com",
     // port: 587,
@@ -13,6 +21,9 @@ const createTransporter = () => {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
+    },
+    tls: {
+      rejectUnauthorized: true
     }
   });
 };
