@@ -14,10 +14,10 @@ const createTransporter = () => {
 
   return nodemailer.createTransport({
     host: "smtp.zoho.com",
-    // port: 587,
-    // secure: false,
-    port: 465,  // Changed from 587
-    secure: true, 
+    port: 587,
+    secure: false,
+    // port: 465,  // Changed from 587
+    // secure: true, 
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
