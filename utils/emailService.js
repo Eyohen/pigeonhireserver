@@ -5,17 +5,18 @@ const path = require('path');
 // Create transporter
 const createTransporter = () => {
 
-// Add verification
+  // Add verification
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error('Email credentials not configured');
   }
-  
+
   console.log('Email user configured:', process.env.EMAIL_USER);
 
   return nodemailer.createTransport({
     host: "smtp.zoho.com",
     port: 587,
     secure: false,
+    requireTLS: true,
     // port: 465,  // Changed from 587
     // secure: true, 
     auth: {
@@ -23,7 +24,7 @@ const createTransporter = () => {
       pass: process.env.EMAIL_PASS
     },
     tls: {
-      rejectUnauthorized: true
+      ciphers: 'SSLv3'
     }
   });
 };
@@ -33,13 +34,13 @@ const loadTemplate = async (templateName, variables = {}) => {
   try {
     const templatePath = path.join(__dirname, '..', 'templates', 'emails', `${templateName}.html`);
     let template = await fs.readFile(templatePath, 'utf8');
-    
+
     // Replace template variables
     Object.keys(variables).forEach(key => {
       const regex = new RegExp(`{{${key}}}`, 'g');
       template = template.replace(regex, variables[key] || '');
     });
-    
+
     return template;
   } catch (error) {
     console.error(`Error loading template ${templateName}:`, error);
@@ -75,7 +76,7 @@ const calculateNextBillingDate = (startDate, planType) => {
 const sendSubscriptionSuccessEmail = async (userEmail, userDetails, subscriptionDetails) => {
   try {
     const transporter = createTransporter();
-    
+
     const templateVariables = {
       userName: `${userDetails.firstName} ${userDetails.lastName}`,
       planType: subscriptionDetails.planType.charAt(0).toUpperCase() + subscriptionDetails.planType.slice(1),
@@ -88,9 +89,9 @@ const sendSubscriptionSuccessEmail = async (userEmail, userDetails, subscription
       privacyUrl: `${process.env.FRONTEND_URL}/privacy`,
       termsUrl: `${process.env.FRONTEND_URL}/terms`
     };
-    
+
     const htmlContent = await loadTemplate('subscription-success', templateVariables);
-    
+
     const mailOptions = {
       from: {
         name: 'Pigeonhire',
@@ -100,11 +101,11 @@ const sendSubscriptionSuccessEmail = async (userEmail, userDetails, subscription
       subject: 'Welcome to Pigeonhire Premium! 🎉',
       html: htmlContent
     };
-    
+
     const result = await transporter.sendMail(mailOptions);
     console.log('Subscription success email sent:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending subscription success email:', error);
     return { success: false, error: error.message };
@@ -115,7 +116,7 @@ const sendSubscriptionSuccessEmail = async (userEmail, userDetails, subscription
 const sendSubscriptionDeactivatedEmail = async (userEmail, userDetails, subscriptionDetails) => {
   try {
     const transporter = createTransporter();
-    
+
     const templateVariables = {
       userName: `${userDetails.firstName} ${userDetails.lastName}`,
       planType: subscriptionDetails.planType.charAt(0).toUpperCase() + subscriptionDetails.planType.slice(1),
@@ -129,9 +130,9 @@ const sendSubscriptionDeactivatedEmail = async (userEmail, userDetails, subscrip
       privacyUrl: `${process.env.FRONTEND_URL}/privacy`,
       termsUrl: `${process.env.FRONTEND_URL}/terms`
     };
-    
+
     const htmlContent = await loadTemplate('subscription-deactivated', templateVariables);
-    
+
     const mailOptions = {
       from: {
         name: 'Pigeonhire',
@@ -141,11 +142,11 @@ const sendSubscriptionDeactivatedEmail = async (userEmail, userDetails, subscrip
       subject: 'Your Pigeonhire Subscription Has Been Deactivated',
       html: htmlContent
     };
-    
+
     const result = await transporter.sendMail(mailOptions);
     console.log('Subscription deactivated email sent:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending subscription deactivated email:', error);
     return { success: false, error: error.message };
@@ -156,7 +157,7 @@ const sendSubscriptionDeactivatedEmail = async (userEmail, userDetails, subscrip
 const sendRenewalReminderEmail = async (userEmail, userDetails, subscriptionDetails) => {
   try {
     const transporter = createTransporter();
-    
+
     const templateVariables = {
       userName: `${userDetails.firstName} ${userDetails.lastName}`,
       planType: subscriptionDetails.planType.charAt(0).toUpperCase() + subscriptionDetails.planType.slice(1),
@@ -170,9 +171,9 @@ const sendRenewalReminderEmail = async (userEmail, userDetails, subscriptionDeta
       billingUrl: `${process.env.FRONTEND_URL}/subscription/billing`,
       unsubscribeUrl: `${process.env.FRONTEND_URL}/subscription/cancel`
     };
-    
+
     const htmlContent = await loadTemplate('renewal-reminder', templateVariables);
-    
+
     const mailOptions = {
       from: {
         name: 'Pigeonhire',
@@ -182,11 +183,11 @@ const sendRenewalReminderEmail = async (userEmail, userDetails, subscriptionDeta
       subject: 'Your Pigeonhire Subscription Expires in 5 Days ⏰',
       html: htmlContent
     };
-    
+
     const result = await transporter.sendMail(mailOptions);
     console.log('Renewal reminder email sent:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending renewal reminder email:', error);
     return { success: false, error: error.message };
