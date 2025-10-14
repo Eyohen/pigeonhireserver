@@ -1,16 +1,10 @@
+//utils/emailService.js
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
 
 // Create transporter
 const createTransporter = () => {
-
-  // Add verification
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('Email credentials not configured');
-  }
-
-  console.log('Email user configured:', process.env.EMAIL_USER);
 
   return nodemailer.createTransport({
     host: "smtp.zoho.com",
@@ -213,3 +207,7 @@ module.exports = {
   sendRenewalReminderEmail,
   testEmailConnection
 };
+
+
+
+
