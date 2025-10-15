@@ -2,17 +2,16 @@
 const express = require("express");
 const db = require("./models");
 const http = require("http");
-const { initializeSocket } = require("./controller/chat");
-const chatRoutes = require("./route/chat");
 const user = require("./route/user");
 const auth = require("./route/auth");
 const community = require("./route/community");
 const connector = require("./route/connector");
-const goal = require("./route/goal");
+const interest = require("./route/interest");
 const communityType = require("./route/communityType");
 const size = require("./route/size");
 const engagementLevel = require("./route/engagementLevel");
-const communicationPlatform = require("./route/communicationPlatform");
+const communicationType = require("./route/communicationType");
+const interactionType = require("./route/interactionType");
 const connCategory = require("./route/connCategory");
 const contentShared = require("./route/contentShared");
 const test = require("./route/test");
@@ -37,8 +36,7 @@ const adminAnalytics = require("./route/adminAnalytics");
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO
-initializeSocket(server);
+
 
 const port = process.env.API_PORT;
 
@@ -89,8 +87,9 @@ app.use("/api/auth", auth);
 app.use("/api/users", user);
 app.use("/api/communitytypes", communityType);
 app.use("/api/engagementLevels", engagementLevel);
-app.use("/api/communicationPlatforms", communicationPlatform);
-app.use("/api/goals", goal);
+app.use("/api/communicationTypes", communicationType);
+app.use("/api/interactionTypes", interactionType);
+app.use("/api/interests", interest);
 app.use("/api/sizes", size);
 app.use("/api/connectioncategories", connCategory);
 app.use("/api/contentshared", contentShared);
@@ -98,7 +97,6 @@ app.use("/api/test", test);
 app.use("/api/posts", blog);
 app.use("/api/admin", admin);
 app.use("/api/currencies", currency);
-app.use("/api/chat", chatRoutes);
 app.use("/api/communities", community);
 app.use("/api/connectors", connector);
 app.use("/api/communityreviews", communityreview);

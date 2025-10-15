@@ -1,8 +1,8 @@
 const express = require('express');
 
-const {create, readall, readId, update, deleteId} = require('../controller/communicationPlatform')
+const {create, readall, readId, update, deleteId} = require('../controller/interactionType')
 // import verifyToken from '../middleware/verifyToken';
-// import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
+// import { verifyToken, requireAdmin } from '../middleware/authMiddleware';
 // const multer = require('multer');
 
 

@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pigeonhire API Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .endpoint-card {
+            transition: all 0.3s ease;
+        }
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .method-get { background-color: #10b981; color: white; }
+        .method-post { background-color: #3b82f6; color: white; }
+        .method-put { background-color: #f59e0b; color: white; }
+        .method-delete { background-color: #ef4444; color: white; }
+        .method-patch { background-color: #8b5cf6; color: white; }
+
+        pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .sidebar-link.active {
+            background-color: #F08E1F;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">Pigeonhire API</h1>
+                    <p class="text-orange-100 text-sm mt-1">Community & Connector Platform API Documentation</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm bg-orange-700 px-3 py-1 rounded-full">Version 1.0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar Navigation -->
+            <aside class="lg:w-64 flex-shrink-0">
+                <div class="bg-white rounded-lg shadow-md p-4 sticky top-24">
+                    <h3 class="font-bold text-lg mb-4 text-gray-800">Quick Navigation</h3>
+
+                    <!-- Search Box -->
+                    <div class="mb-4">
+                        <input
+                            type="text"
+                            id="searchBox"
+                            placeholder="Search endpoints..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                    </div>
+
+                    <nav class="space-y-1">
+                        <a href="#overview" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Overview</a>
+                        <a href="#authentication" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Authentication</a>
+                        <a href="#users" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Users</a>
+                        <a href="#admin" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Admin</a>
+                        <a href="#communities" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Communities</a>
+                        <a href="#connectors" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Connectors</a>
+                        <a href="#subscriptions" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Subscriptions</a>
+                        <a href="#analytics" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Analytics</a>
+                        <a href="#favorites" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Favorites</a>
+                        <a href="#reviews" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Reviews</a>
+                        <a href="#resources" class="sidebar-link block px-3 py-2 rounded-md text-sm hover:bg-orange-100 transition">Resources</a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Documentation -->
+            <main class="flex-1">
+                <!-- Overview Section -->
+                <section id="overview" class="mb-12">
+                    <div class="bg-white rounded-lg shadow-md p-8">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Overview</h2>
+                        <p class="text-gray-600 mb-4">
+                            Welcome to the Pigeonhire API documentation. This API provides endpoints for managing communities,
+                            connectors, users, subscriptions, and analytics for the Pigeonhire platform.
+                        </p>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                            <h4 class="font-bold text-blue-900 mb-2">Base URL</h4>
+                            <code class="text-blue-800">https://your-api-domain.com/api</code>
+                        </div>
+
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                            <h4 class="font-bold text-yellow-900 mb-2">⚠️ Security Notice</h4>
+                            <p class="text-yellow-800 text-sm">
+                                Most endpoints currently have authentication disabled (middleware commented out).
+                                It's recommended to enable authentication in production environments.
+                            </p>
+                        </div>
+
+                        <div class="mt-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">Key Features</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>User authentication with JWT tokens</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>Community and connector management</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>Subscription system with Stripe integration</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>Analytics and user tracking</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>Reviews and ratings system</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-orange-500 mr-2">•</span>
+                                    <span>Admin team member management</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Authentication Section -->
+                <section id="authentication" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Authentication</h2>
+
+                    <div class="space-y-4">
+                        <!-- Register -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/auth/register</code>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-4">Register a new user account</p>
+
+                            <button onclick="toggleDetails('register-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="register-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
+}</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Response (200 OK):</h4>
+                                <pre><code>{
+  "record": {
+    "id": "uuid",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "verified": false
+  },
+  "msg": "User successfully created"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Login -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/auth/login</code>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-4">Login with email and password</p>
+
+                            <button onclick="toggleDetails('login-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="login-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Response (200 OK):</h4>
+                                <pre><code>{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "john@example.com",
+    "fname": "John",
+    "lname": "Doe",
+    "role": "user",
+    "currency": "USD",
+    "subscribed": false
+  }
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Admin Login -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/auth/adminlogin</code>
+                                </div>
+                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Admin</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">Admin/SuperAdmin login endpoint</p>
+
+                            <button onclick="toggleDetails('admin-login-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="admin-login-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "email": "admin@example.com",
+  "password": "adminPassword123"
+}</code></pre>
+
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
+                                    <p class="text-blue-800 text-sm">
+                                        <strong>Note:</strong> This endpoint requires the user's role to be 'admin' or 'superadmin'
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verify Email -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/auth/verify-email?token={token}</code>
+                            </div>
+                            <p class="text-gray-600">Verify user email address using verification token</p>
+                        </div>
+
+                        <!-- Forgot Password -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/auth/forgot-password</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Request password reset OTP</p>
+
+                            <button onclick="toggleDetails('forgot-password-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="forgot-password-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "email": "john@example.com"
+}</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Response (200 OK):</h4>
+                                <pre><code>{
+  "msg": "Password reset OTP sent to your email",
+  "resetToken": "reset-token-here"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Verify OTP -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/auth/verify-otp</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Verify OTP for password reset</p>
+
+                            <button onclick="toggleDetails('verify-otp-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="verify-otp-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Headers:</h4>
+                                <pre><code>x-reset-token: reset-token-from-forgot-password</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "otp": "1234"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Reset Password -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/auth/reset-password</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Reset password with new password</p>
+
+                            <button onclick="toggleDetails('reset-password-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="reset-password-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Headers:</h4>
+                                <pre><code>x-reset-token: reset-token-from-forgot-password</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "newPassword": "newSecurePassword123"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Users</h2>
+
+                    <div class="space-y-4">
+                        <!-- Get All Users -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Get all users with pagination and search</p>
+
+                            <button onclick="toggleDetails('users-list-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="users-list-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Query Parameters:</h4>
+                                <ul class="text-sm text-gray-600 space-y-1 mb-4">
+                                    <li><code>page</code> - Page number (default: 1)</li>
+                                    <li><code>limit</code> - Items per page (default: 10)</li>
+                                    <li><code>search</code> - Search by firstName, lastName, or email</li>
+                                </ul>
+
+                                <h4 class="font-bold text-gray-800 mb-2">Response (200 OK):</h4>
+                                <pre><code>{
+  "users": [...],
+  "totalCount": 100,
+  "totalPages": 10,
+  "currentPage": 1,
+  "hasNextPage": true,
+  "hasPrevPage": false
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Get User by ID -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/:id</code>
+                            </div>
+                            <p class="text-gray-600">Get user details by ID including reviews</p>
+                        </div>
+
+                        <!-- Update User -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/:id</code>
+                            </div>
+                            <p class="text-gray-600">Update user information</p>
+                        </div>
+
+                        <!-- Update Profile -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/profile/:id</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Enhanced profile update with validation</p>
+
+                            <button onclick="toggleDetails('update-profile-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="update-profile-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body (all fields optional):</h4>
+                                <pre><code>{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "newemail@example.com",
+  "phone": "+1234567890",
+  "bio": "User bio",
+  "location": "New York",
+  "currentPassword": "oldPassword",
+  "newPassword": "newPassword"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Manual Subscribe/Unsubscribe -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/:id/subscribe</code>
+                            </div>
+                            <p class="text-gray-600 mb-2">Manually subscribe a user (admin action)</p>
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Admin Action</span>
+                        </div>
+
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/:id/unsubscribe</code>
+                            </div>
+                            <p class="text-gray-600 mb-2">Manually unsubscribe a user (admin action)</p>
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Admin Action</span>
+                        </div>
+
+                        <!-- Delete User -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-delete">DELETE</span>
+                                <code class="text-lg font-mono text-gray-800">/api/users/:id</code>
+                            </div>
+                            <p class="text-gray-600">Delete a user account</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Admin Section -->
+                <section id="admin" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Admin Management</h2>
+
+                    <div class="space-y-4">
+                        <!-- Create Team Member -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/admin/team-members</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">Create a new admin or superadmin team member</p>
+
+                            <button onclick="toggleDetails('create-team-member-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="create-team-member-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Headers:</h4>
+                                <pre><code>Authorization: Bearer {accessToken}</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "firstName": "Jane",
+  "lastName": "Admin",
+  "email": "jane@admin.com",
+  "role": "admin"  // or "superadmin"
+}</code></pre>
+
+                                <h4 class="font-bold text-gray-800 mt-4 mb-2">Response (201 Created):</h4>
+                                <pre><code>{
+  "msg": "Team member created successfully",
+  "user": {
+    "id": "uuid",
+    "firstName": "Jane",
+    "lastName": "Admin",
+    "email": "jane@admin.com",
+    "role": "admin",
+    "verified": true
+  },
+  "tempPassword": "abc123def",
+  "emailSent": true
+}</code></pre>
+
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
+                                    <p class="text-blue-800 text-sm">
+                                        <strong>Note:</strong> A temporary password is generated and sent via email.
+                                        Only superadmins can create other superadmins.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Get Team Members -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-get">GET</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/admin/team-members</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Get list of all admin and superadmin team members</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Communities Section -->
+                <section id="communities" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Communities</h2>
+
+                    <div class="space-y-4">
+                        <!-- Create Community -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/create</code>
+                            </div>
+                            <p class="text-gray-600">Create a new community</p>
+                        </div>
+
+                        <!-- Get All Communities -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Get all communities with pagination, filters, and subscription check</p>
+
+                            <button onclick="toggleDetails('communities-list-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="communities-list-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Query Parameters:</h4>
+                                <ul class="text-sm text-gray-600 space-y-1 mb-4">
+                                    <li><code>page</code> - Page number (default: 1)</li>
+                                    <li><code>limit</code> - Items per page (default: 10)</li>
+                                    <li><code>search</code> - Search by name or description</li>
+                                    <li><code>communityType</code> - Filter by community type</li>
+                                    <li><code>size</code> - Filter by size</li>
+                                    <li><code>engagementLevel</code> - Filter by engagement level</li>
+                                    <li><code>userId</code> - Current user ID for subscription check</li>
+                                </ul>
+
+                                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                                    <p class="text-yellow-800 text-sm">
+                                        <strong>Subscription Check:</strong> Non-subscribed users see limited results
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Get Community by ID -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/:id</code>
+                            </div>
+                            <p class="text-gray-600">Get community details by ID</p>
+                        </div>
+
+                        <!-- Update Community -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/:id</code>
+                            </div>
+                            <p class="text-gray-600">Update community information</p>
+                        </div>
+
+                        <!-- Toggle Restrict -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/restrict/:id</code>
+                            </div>
+                            <p class="text-gray-600">Toggle community restriction status</p>
+                        </div>
+
+                        <!-- Get User Communities -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/:userId/communities</code>
+                            </div>
+                            <p class="text-gray-600">Get all communities created by a specific user</p>
+                        </div>
+
+                        <!-- Delete Community -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-delete">DELETE</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communities/:id</code>
+                            </div>
+                            <p class="text-gray-600">Delete a community</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Connectors Section -->
+                <section id="connectors" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Connectors</h2>
+
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <p class="text-blue-800 text-sm">
+                                <strong>Note:</strong> Connector endpoints follow the same pattern as Communities with similar functionality
+                            </p>
+                        </div>
+
+                        <!-- Create Connector -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/connectors/create</code>
+                            </div>
+                            <p class="text-gray-600">Create a new connector</p>
+                        </div>
+
+                        <!-- Get All Connectors -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/connectors</code>
+                            </div>
+                            <p class="text-gray-600">Get all connectors with pagination and filters</p>
+                        </div>
+
+                        <!-- Get Connector by ID -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/connectors/:id</code>
+                            </div>
+                            <p class="text-gray-600">Get connector details by ID</p>
+                        </div>
+
+                        <!-- Update/Delete Similar to Communities -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/connectors/:id</code>
+                            </div>
+                            <p class="text-gray-600">Update connector information</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Subscriptions Section -->
+                <section id="subscriptions" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Subscriptions</h2>
+
+                    <div class="space-y-4">
+                        <!-- Stripe Webhook -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/subscriptions/webhook</code>
+                                </div>
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">Stripe</span>
+                            </div>
+                            <p class="text-gray-600 mb-2">Stripe webhook handler for subscription events</p>
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+                                <p class="text-yellow-800 text-sm">
+                                    <strong>Important:</strong> This endpoint requires raw body parsing (express.raw middleware)
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Get Subscription Plans -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/subscriptions/plans</code>
+                            </div>
+                            <p class="text-gray-600">Get available subscription plans with pricing</p>
+                        </div>
+
+                        <!-- Get User Subscription -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/subscriptions/user/:userId</code>
+                            </div>
+                            <p class="text-gray-600">Get user's current subscription details</p>
+                        </div>
+
+                        <!-- Validate Subscription -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/subscriptions/validate/:userId</code>
+                            </div>
+                            <p class="text-gray-600">Validate if user has active subscription</p>
+                        </div>
+
+                        <!-- Cancel Subscription -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/subscriptions/cancel/:subscriptionId</code>
+                            </div>
+                            <p class="text-gray-600">Cancel an active subscription</p>
+                        </div>
+
+                        <!-- Get All Subscriptions (Admin) -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-get">GET</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/subscriptions/admin/all</code>
+                                </div>
+                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Admin</span>
+                            </div>
+                            <p class="text-gray-600">Get all subscriptions (admin view)</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section id="analytics" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Analytics</h2>
+
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                        <p class="text-red-800 text-sm">
+                            <strong>🔒 All analytics endpoints require authentication (verifyToken)</strong>
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- User Dashboard Analytics -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-get">GET</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/dashboard/:userId</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">Get comprehensive user analytics dashboard data</p>
+
+                            <button onclick="toggleDetails('analytics-dashboard-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="analytics-dashboard-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Response includes:</h4>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li>• Total contacts</li>
+                                    <li>• Total profile views</li>
+                                    <li>• Total leads</li>
+                                    <li>• Total networks</li>
+                                    <li>• Recent activity</li>
+                                    <li>• Trending data</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Record Contact -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/contact</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Record a contact interaction</p>
+                        </div>
+
+                        <!-- Record Profile View -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/profile-view</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Record a profile view</p>
+                        </div>
+
+                        <!-- Leads Management -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/leads</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Create a new lead</p>
+                        </div>
+
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-get">GET</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/leads/:userId</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Get user's leads</p>
+                        </div>
+
+                        <!-- Networks Management -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <code class="text-lg font-mono text-gray-800">/api/analytics/networks</code>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">🔒 Auth Required</span>
+                            </div>
+                            <p class="text-gray-600">Create a new network connection</p>
+                        </div>
+
+                        <!-- Admin Analytics -->
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 my-4">
+                            <h4 class="font-bold text-purple-900 mb-2">Admin Analytics Endpoints</h4>
+                            <p class="text-purple-800 text-sm">
+                                Available at <code>/api/admin-analytics/*</code> - includes dashboard, top communities,
+                                subscription trends, and user activity
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Favorites Section -->
+                <section id="favorites" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Favorites</h2>
+
+                    <div class="space-y-4">
+                        <!-- Add Community to Favorites -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/favorites/communities/add</code>
+                            </div>
+                            <p class="text-gray-600">Add a community to user's favorites</p>
+                        </div>
+
+                        <!-- Remove Community from Favorites -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-delete">DELETE</span>
+                                <code class="text-lg font-mono text-gray-800">/api/favorites/communities/:userId/:communityId</code>
+                            </div>
+                            <p class="text-gray-600">Remove a community from favorites</p>
+                        </div>
+
+                        <!-- Check if Favorited -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/favorites/communities/check/:userId/:communityId</code>
+                            </div>
+                            <p class="text-gray-600">Check if a community is favorited</p>
+                        </div>
+
+                        <!-- Get Most Favorited Communities -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/favorites/communities/most-favorited</code>
+                            </div>
+                            <p class="text-gray-600">Get most favorited communities</p>
+                        </div>
+
+                        <!-- Connector Favorites (Similar Pattern) -->
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-4">
+                            <p class="text-blue-800 text-sm">
+                                <strong>Note:</strong> Connector favorites follow the same pattern with endpoints at
+                                <code>/api/favorites/connectors/*</code>
+                            </p>
+                        </div>
+
+                        <!-- Get User Favorites -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/favorites/:userId</code>
+                            </div>
+                            <p class="text-gray-600">Get all favorites for a user</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reviews Section -->
+                <section id="reviews" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Reviews</h2>
+
+                    <div class="space-y-4">
+                        <!-- Community Reviews -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communityreviews/communities/:communityId/reviews</code>
+                            </div>
+                            <p class="text-gray-600 mb-4">Create a review for a community</p>
+
+                            <button onclick="toggleDetails('create-review-details')" class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Show Details ▼
+                            </button>
+
+                            <div id="create-review-details" class="hidden mt-4">
+                                <h4 class="font-bold text-gray-800 mb-2">Request Body:</h4>
+                                <pre><code>{
+  "rating": 5,
+  "comment": "Great community!",
+  "reviewerId": "user-id"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Get Community Reviews -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communityreviews/communities/:communityId/reviews</code>
+                            </div>
+                            <p class="text-gray-600">Get all reviews for a community</p>
+                        </div>
+
+                        <!-- Get User's Review -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communityreviews/communities/:communityId/user-review</code>
+                            </div>
+                            <p class="text-gray-600">Get user's review for a specific community</p>
+                        </div>
+
+                        <!-- Update Review -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communityreviews/community-reviews/:id</code>
+                            </div>
+                            <p class="text-gray-600">Update an existing review</p>
+                        </div>
+
+                        <!-- Delete Review -->
+                        <div class="endpoint-card bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="method-badge method-delete">DELETE</span>
+                                <code class="text-lg font-mono text-gray-800">/api/communityreviews/community-reviews/:id</code>
+                            </div>
+                            <p class="text-gray-600">Delete a review</p>
+                        </div>
+
+                        <!-- Connector Reviews (Similar Pattern) -->
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-4">
+                            <p class="text-blue-800 text-sm">
+                                <strong>Note:</strong> Connector reviews follow the same pattern with endpoints at
+                                <code>/api/connectorreviews/connectors/*</code>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Resources Section -->
+                <section id="resources" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Resource Endpoints</h2>
+
+                    <p class="text-gray-600 mb-4">
+                        The following resources follow standard CRUD patterns with endpoints for create, read, update, and delete operations:
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Interests -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Interests</h3>
+                            <code class="text-sm text-gray-600">/api/interests</code>
+                            <p class="text-sm text-gray-500 mt-2">Community interests with primary and secondary types</p>
+                        </div>
+
+                        <!-- Communication Types -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Communication Types</h3>
+                            <code class="text-sm text-gray-600">/api/communicationTypes</code>
+                            <p class="text-sm text-gray-500 mt-2">Communication platforms and methods</p>
+                        </div>
+
+                        <!-- Interaction Types -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Interaction Types</h3>
+                            <code class="text-sm text-gray-600">/api/interactionTypes</code>
+                            <p class="text-sm text-gray-500 mt-2">Types of community interactions</p>
+                        </div>
+
+                        <!-- Community Types -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Community Types</h3>
+                            <code class="text-sm text-gray-600">/api/communitytypes</code>
+                            <p class="text-sm text-gray-500 mt-2">Categories of communities</p>
+                        </div>
+
+                        <!-- Engagement Levels -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Engagement Levels</h3>
+                            <code class="text-sm text-gray-600">/api/engagementLevels</code>
+                            <p class="text-sm text-gray-500 mt-2">Community engagement levels</p>
+                        </div>
+
+                        <!-- Sizes -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Sizes</h3>
+                            <code class="text-sm text-gray-600">/api/sizes</code>
+                            <p class="text-sm text-gray-500 mt-2">Community size categories</p>
+                        </div>
+
+                        <!-- Currencies -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Currencies</h3>
+                            <code class="text-sm text-gray-600">/api/currencies</code>
+                            <p class="text-sm text-gray-500 mt-2">Supported currencies with pricing</p>
+                        </div>
+
+                        <!-- Content Shared -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Content Shared</h3>
+                            <code class="text-sm text-gray-600">/api/contentshared</code>
+                            <p class="text-sm text-gray-500 mt-2">Types of content shared</p>
+                        </div>
+
+                        <!-- Connection Categories -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Connection Categories</h3>
+                            <code class="text-sm text-gray-600">/api/connectioncategories</code>
+                            <p class="text-sm text-gray-500 mt-2">Connector categories</p>
+                        </div>
+
+                        <!-- Blog Posts -->
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <h3 class="font-bold text-gray-800 mb-2">Blog Posts</h3>
+                            <code class="text-sm text-gray-600">/api/posts</code>
+                            <p class="text-sm text-gray-500 mt-2">Blog posts with image upload</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 mt-6">
+                        <h4 class="font-bold text-green-900 mb-2">Standard CRUD Endpoints</h4>
+                        <p class="text-green-800 text-sm mb-2">All resource endpoints support:</p>
+                        <ul class="text-sm text-green-800 space-y-1">
+                            <li>• <code>POST /create</code> - Create new record</li>
+                            <li>• <code>GET /</code> - Get all records</li>
+                            <li>• <code>GET /:id</code> - Get record by ID</li>
+                            <li>• <code>PUT /:id</code> - Update record</li>
+                            <li>• <code>DELETE /:id</code> - Delete record</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Error Codes Section -->
+                <section id="errors" class="mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Common Error Responses</h2>
+
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">HTTP Status Codes</h3>
+
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded font-mono text-sm mr-3">200</span>
+                                    <div>
+                                        <p class="font-medium">OK</p>
+                                        <p class="text-sm text-gray-600">Request succeeded</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded font-mono text-sm mr-3">201</span>
+                                    <div>
+                                        <p class="font-medium">Created</p>
+                                        <p class="text-sm text-gray-600">Resource created successfully</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded font-mono text-sm mr-3">400</span>
+                                    <div>
+                                        <p class="font-medium">Bad Request</p>
+                                        <p class="text-sm text-gray-600">Invalid request data</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded font-mono text-sm mr-3">401</span>
+                                    <div>
+                                        <p class="font-medium">Unauthorized</p>
+                                        <p class="text-sm text-gray-600">Authentication required or failed</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded font-mono text-sm mr-3">403</span>
+                                    <div>
+                                        <p class="font-medium">Forbidden</p>
+                                        <p class="text-sm text-gray-600">Insufficient permissions</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded font-mono text-sm mr-3">404</span>
+                                    <div>
+                                        <p class="font-medium">Not Found</p>
+                                        <p class="text-sm text-gray-600">Resource not found</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded font-mono text-sm mr-3">500</span>
+                                    <div>
+                                        <p class="font-medium">Internal Server Error</p>
+                                        <p class="text-sm text-gray-600">Server error occurred</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Example Error Response</h3>
+                            <pre><code>{
+  "msg": "Error message description",
+  "error": "ERROR_CODE",
+  "field": "fieldName" // (optional, for validation errors)
+}</code></pre>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12 py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mb-2">Pigeonhire API Documentation</p>
+            <p class="text-gray-400 text-sm">© 2025 Pigeonhire. All rights reserved.</p>
+            <p class="text-gray-400 text-sm mt-2">Version 1.0 - Last Updated: January 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle details function
+        function toggleDetails(id) {
+            const element = document.getElementById(id);
+            const button = event.target;
+
+            if (element.classList.contains('hidden')) {
+                element.classList.remove('hidden');
+                button.textContent = 'Hide Details ▲';
+            } else {
+                element.classList.add('hidden');
+                button.textContent = 'Show Details ▼';
+            }
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+
+                    // Update active link
+                    document.querySelectorAll('.sidebar-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const endpoints = document.querySelectorAll('.endpoint-card');
+
+            endpoints.forEach(endpoint => {
+                const text = endpoint.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    endpoint.style.display = 'block';
+                } else {
+                    endpoint.style.display = 'none';
+                }
+            });
+        });
+
+        // Highlight active section on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const scrollY = window.pageYOffset;
+
+            sections.forEach(section => {
+                const sectionHeight = section.offsetHeight;
+                const sectionTop = section.offsetTop - 100;
+                const sectionId = section.getAttribute('id');
+
+                if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                    document.querySelectorAll('.sidebar-link').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${sectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

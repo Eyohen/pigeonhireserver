@@ -273,7 +273,7 @@
 
 
 
-//utils/sendgrid.js
+//utils/nodemailer.js
 const sgMail = require('@sendgrid/mail');
 
 // Set SendGrid API key

@@ -12,9 +12,10 @@ const { Op } = require("sequelize");
 const { permission } = require("process");
 const { subscribe } = require("diagnostics_channel");
 const { error } = require("console");
-const { 
-  sendSubscriptionSuccessEmail, 
-  sendSubscriptionDeactivatedEmail 
+const {
+  sendSubscriptionSuccessEmail,
+  sendSubscriptionDeactivatedEmail,
+  sendTeamMemberInvitation
 } = require('../utils/emailService');
 
 
@@ -1073,6 +1074,140 @@ const manualUnsubscribe = async (req, res) => {
 
 
 
+// Create team member (Admin/SuperAdmin only)
+const createTeamMember = async (req, res) => {
+  try {
+    const { firstName, lastName, email, role } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !role) {
+      return res.status(400).json({
+        msg: "All fields are required (firstName, lastName, email, role)"
+      });
+    }
+
+    // Validate role
+    if (role !== 'admin' && role !== 'superadmin') {
+      return res.status(400).json({
+        msg: "Role must be either 'admin' or 'superadmin'"
+      });
+    }
+
+    // Check if requesting user is admin or superadmin
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'superadmin')) {
+      return res.status(403).json({
+        msg: "Unauthorized: Only admins can create team members"
+      });
+    }
+
+    // Only superadmin can create another superadmin
+    if (role === 'superadmin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({
+        msg: "Unauthorized: Only superadmins can create other superadmins"
+      });
+    }
+
+    // Check if user with email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ msg: "Email already exists" });
+    }
+
+    // Generate temporary password (8 characters: letters + numbers)
+    const tempPassword = crypto.randomBytes(4).toString('hex');
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    // Create the team member
+    const teamMember = await User.create({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      role,
+      verified: true, // Team members are auto-verified
+      verificationToken: null
+    });
+
+    // Send invitation email with credentials
+    try {
+      await sendTeamMemberInvitation(email, {
+        firstName,
+        lastName,
+        role
+      }, tempPassword);
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+      // Don't fail the creation if email fails
+    }
+
+    // Return response without password
+    return res.status(201).json({
+      msg: "Team member created successfully",
+      user: {
+        id: teamMember.id,
+        firstName: teamMember.firstName,
+        lastName: teamMember.lastName,
+        email: teamMember.email,
+        role: teamMember.role,
+        verified: teamMember.verified
+      },
+      tempPassword: tempPassword, // Send password in response for admin reference
+      emailSent: true
+    });
+
+  } catch (error) {
+    console.error("Error creating team member:", error);
+    return res.status(500).json({
+      msg: "Failed to create team member",
+      error: error.message
+    });
+  }
+};
+
+// Get all team members (Admin/SuperAdmin only)
+const getTeamMembers = async (req, res) => {
+  try {
+    // Check if requesting user is admin or superadmin
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'superadmin')) {
+      return res.status(403).json({
+        msg: "Unauthorized: Only admins can view team members"
+      });
+    }
+
+    const teamMembers = await User.findAll({
+      where: {
+        role: {
+          [Op.in]: ['admin', 'superadmin']
+        }
+      },
+      attributes: {
+        exclude: [
+          'password',
+          'resetPasswordOTP',
+          'resetPasswordToken',
+          'resetPasswordExpires',
+          'verificationToken'
+        ]
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json({
+      teamMembers,
+      count: teamMembers.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    return res.status(500).json({
+      msg: "Failed to fetch team members",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   register,
   create,
@@ -1097,5 +1232,9 @@ module.exports = {
   uploadProfileImage,
   changePassword,
   manualSubscribe,
-  manualUnsubscribe
+  manualUnsubscribe,
+
+  // Team member management
+  createTeamMember,
+  getTeamMembers
 };

@@ -1,15 +1,17 @@
 const express = require('express');
-// import TodoValidator from '../validator';
-// import Middleware from '../../middleware';
-// const {re} = require('../controller/UserController');
-const {register, login, adminLogin, 
-    
-    refresh, verifyEmail, forgotPassword, resetPassword, verifyOTP} = require('../controller/user');
-// import verifyToken from '../middleware/verifyToken';
-// import { verifyToken, requireAdmin } from '../middleware/authMiddleware'; 
-
-
-
+const {
+    register,
+    login,
+    adminLogin,
+    refresh,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
+    verifyOTP,
+    createTeamMember,
+    getTeamMembers
+} = require('../controller/user');
+const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -36,7 +38,19 @@ router.post(
     resetPassword
 );
 
+// Team member management routes (Protected)
+router.post(
+    '/team-members',
+    verifyToken,
+    requireAdmin,
+    createTeamMember
+);
 
-
+router.get(
+    '/team-members',
+    verifyToken,
+    requireAdmin,
+    getTeamMembers
+);
 
 module.exports = router;
