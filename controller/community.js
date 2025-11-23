@@ -19,14 +19,21 @@ cloudinary.config({
 
 const create = async (req, res) => {
   try {
+    console.log("=== CREATING COMMUNITY ===");
     console.log("Received data:", req.body);
-    console.log("Owner ID:", req.body.ownerId);
+    console.log("userId in request:", req.body.userId);
+    console.log("ownerId in request:", req.body.ownerId);
 
     // create community record in the database
-    const record = await Community.create({ ...req.body});
+    const record = await Community.create({ ...req.body, recordType: "owner record" });
+
+    console.log("Created community with ID:", record.id);
+    console.log("Created community userId:", record.userId);
+    console.log("Created community name:", record.name);
+
     return res
       .status(200)
-      .json({ record, msg: "Successfully created Community" });
+      .json({ record, msg: "Successfully created Community", success: true });
   } catch (error) {
     console.error("Error in create:", error);
     return res.status(500).json({ msg: "fail to create", error });
@@ -36,22 +43,61 @@ const create = async (req, res) => {
 // Public endpoint - shows limited results for non-subscribers
 const readall = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      category = "",
+      communityType = "",
+      platform = ""
+    } = req.query;
     const offset = (page - 1) * limit;
 
     // Check subscription status
     const hasSubscription = req.subscriptionStatus?.hasSubscription || false;
-    
+
     // For non-subscribers, limit results and show only basic info
     const effectiveLimit = hasSubscription ? parseInt(limit) : Math.min(parseInt(limit), 5);
-    
+
+    // Build where clause
+    const whereClause = {
+      restrict: false,
+    };
+
+    // Add search filter
+    if (search) {
+      whereClause.name = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+
+    // Add category filter - check both communityInterest and commTypeCategory
+    // Also handle "and" vs "&" variations (e.g., "Arts & Culture" matches "Arts and Culture")
+    if (category) {
+      const categoryVariant = category.replace(/&/g, 'and').replace(/\s+/g, ' ').trim();
+      whereClause[Op.or] = [
+        { communityInterest: { [Op.iLike]: `%${category}%` } },
+        { communityInterest: { [Op.iLike]: `%${categoryVariant}%` } },
+        { commTypeCategory: { [Op.overlap]: [category, categoryVariant] } }
+      ];
+    }
+
+    // Add community type filter
+    if (communityType) {
+      whereClause.communityType = {
+        [Op.iLike]: `%${communityType}%`,
+      };
+    }
+
+    // Add platform filter
+    if (platform) {
+      whereClause.communicationPlatform = {
+        [Op.iLike]: `%${platform}%`,
+      };
+    }
+
     const { count, rows: communities } = await Community.findAndCountAll({
-      where: {
-        name: {
-          [Op.iLike]: `%${search}%`,
-        },
-        restrict: false,
-      },
+      where: whereClause,
       limit: effectiveLimit,
       offset: parseInt(offset),
       order: [["createdAt", "DESC"]],
@@ -69,7 +115,12 @@ const readall = async (req, res) => {
       totalPages: Math.ceil(count / effectiveLimit),
       currentPage: parseInt(page),
       hasSubscription,
-      isLimitedView: !hasSubscription
+      isLimitedView: !hasSubscription,
+      filters: {
+        category,
+        communityType,
+        platform
+      }
     };
 
     // Add subscription prompt for non-subscribers
@@ -77,13 +128,13 @@ const readall = async (req, res) => {
       response.subscriptionMessage = "Subscribe to view all communities and contact details";
       response.maxFreeResults = 5;
     }
-    
+
     return res.json(response);
   } catch (error) {
     console.error("Error reading communities:", error);
-    return res.status(500).json({ 
-      msg: "Failed to read communities", 
-      status: 500, 
+    return res.status(500).json({
+      msg: "Failed to read communities",
+      status: 500,
       route: "/read",
       error: error.message
     });

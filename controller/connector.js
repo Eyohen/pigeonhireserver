@@ -30,7 +30,7 @@ const create = async (req, res) => {
     }
 
     // create connector record in the database
-    const record = await Connector.create({ ...req.body});
+    const record = await Connector.create({ ...req.body, recordType: "owner record" });
     return res
       .status(200)
       .json({ record, msg: "Successfully created Connector" });
@@ -42,34 +42,87 @@ const create = async (req, res) => {
 
 const readall = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      category = "",
+      connectorType = "",
+      platform = ""
+    } = req.query;
     const offset = (page - 1) * limit;
 
+    // Build where clause for connectors
+    const whereClause = {
+      restrict: false,
+    };
+
+    // Add search filter
+    if (search) {
+      whereClause.firstName = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+
+    // Add connector type (role) filter
+    if (connectorType) {
+      whereClause.role = {
+        [Op.iLike]: `%${connectorType}%`,
+      };
+    }
+
+    // Add platform filter
+    if (platform) {
+      whereClause.connectionPlatform = {
+        [Op.iLike]: `%${platform}%`,
+      };
+    }
+
+    // Build include options for community filtering
+    const includeOptions = [{
+      model: Community,
+      as: "community",
+      required: false
+    }];
+
+    // If category filter is provided, filter by community category
+    // Handle both "and" vs "&" variations (e.g., "Arts & Culture" matches "Arts and Culture")
+    if (category) {
+      const categoryVariant = category.replace(/&/g, 'and').replace(/\s+/g, ' ').trim();
+      includeOptions[0].where = {
+        [Op.or]: [
+          { communityInterest: { [Op.iLike]: `%${category}%` } },
+          { communityInterest: { [Op.iLike]: `%${categoryVariant}%` } },
+          { commTypeCategory: { [Op.overlap]: [category, categoryVariant] } }
+        ]
+      };
+      includeOptions[0].required = true; // Only return connectors that have matching communities
+    }
+
     const { count, rows: connectors } = await Connector.findAndCountAll({
-      where: {
-        firstName: {
-          [Op.iLike]: `%${search}%`,
-        },
-        restrict: false,
-      },
+      where: whereClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [["createdAt", "DESC"]],
-      include: [
-        { model: Community, as: "community" }
-      ],
+      include: includeOptions,
+      distinct: true, // Important for accurate count with includes
     });
-    
+
     return res.json({
       connectors,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
+      filters: {
+        category,
+        connectorType,
+        platform
+      }
     });
   } catch (error) {
     console.error("Error reading connectors:", error);
-    return res.status(500).json({ 
-      msg: "Failed to read connectors", 
-      status: 500, 
+    return res.status(500).json({
+      msg: "Failed to read connectors",
+      status: 500,
       route: "/read",
       error: error.message
     });
@@ -298,30 +351,36 @@ const readUserCommunities = async (req, res) => {
     const { page = 1, limit = 10, search = "" } = req.query;
     const offset = (page - 1) * limit;
 
-    const { count, rows: connectors } = await Connector.findAndCountAll({
-      where: {
-        userId: userId,
-        firstName: {
-          [Op.iLike]: `%${search}%`,
-        }
-      },
+    // Build where clause
+    const whereClause = {
+      userId: userId,
+    };
+
+    // Only add name filter if search is provided
+    if (search && search.trim() !== "") {
+      whereClause.name = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+
+    const { count, rows: communities } = await Community.findAndCountAll({
+      where: whereClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [["createdAt", "DESC"]],
-      include: [
-        { model: Community, as: "community" }
-      ],
     });
 
+    console.log(`Fetching communities for user ${userId}, found ${count} communities`);
+
     return res.json({
-      connectors,
+      communities,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
     });
   } catch (e) {
-    console.error("Error fetching user connectors:", e);
+    console.error("Error fetching user communities:", e);
     return res.status(500).json({
-      msg: "Failed to fetch user connectors",
+      msg: "Failed to fetch user communities",
       status: 500,
       route: "/:userId/communities"
     });

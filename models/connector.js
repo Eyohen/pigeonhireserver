@@ -136,6 +136,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    linkedin: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     communityName: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -152,6 +156,11 @@ module.exports = (sequelize, DataTypes) => {
         key: "id",
       },
       onDelete: 'CASCADE'
+    },
+    recordType: {
+      type: DataTypes.ENUM('owner record', 'public record'),
+      allowNull: false,
+      defaultValue: 'public record'
     }
   }, {
     sequelize,

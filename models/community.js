@@ -175,6 +175,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    linkedin: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     days: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -199,6 +203,11 @@ module.exports = (sequelize, DataTypes) => {
         key: "id",
       },
       onDelete: 'CASCADE'
+    },
+    recordType: {
+      type: DataTypes.ENUM('owner record', 'public record'),
+      allowNull: false,
+      defaultValue: 'public record'
     },
     rating: {
       type: DataTypes.FLOAT,
