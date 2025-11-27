@@ -96,7 +96,7 @@ app.use("/api/contentshared", contentShared);
 app.use("/api/test", test);
 app.use("/api/posts", blog);
 app.use("/api/admin", admin);
-app.use("/api/currencies", currency);
+app.use("/api/pricing", currency);
 app.use("/api/communities", community);
 app.use("/api/connectors", connector);
 app.use("/api/communityreviews", communityreview);

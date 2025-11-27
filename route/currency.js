@@ -2,6 +2,7 @@
 const express = require('express');
 
 const {create, readall, readId, update, deleteId} = require('../controller/currency')
+const {getSubscriptionPlans} = require('../controller/subscription')
 
 
 
@@ -17,7 +18,7 @@ router.post(
 
 router.get(
     '/',
-    readall
+    getSubscriptionPlans
 );
 router.get(
 	'/:id',
